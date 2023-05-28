@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Repositories\DaoBackup.cs" />
+    <Compile Remove="Repositories\Dto.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Repositories\Templates\ChildPrimaryKeyProperty.tmpl" />
+    <None Remove="Repositories\Templates\Dto.tmpl" />
+    <None Remove="Repositories\Templates\ForeignKeyProperty.tmpl" />
+    <None Remove="Repositories\Templates\SchemaRepository.tmpl" />
+    <None Remove="Repositories\Templates\SchemaRepositoryAddType.tmpl" />
+    <None Remove="Repositories\Templates\SchemaRepositoryMethods.tmpl" />
+    <None Remove="Repositories\Templates\Wrapper.tmpl" />
+    <None Remove="Repositories\Templates\XrefLeftProperty.tmpl" />
+    <None Remove="Repositories\Templates\XrefRightProperty.tmpl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Repositories\Templates\ChildPrimaryKeyProperty.tmpl" />
+    <EmbeddedResource Include="Repositories\Templates\Dto.tmpl" />
+    <EmbeddedResource Include="Repositories\Templates\ForeignKeyProperty.tmpl" />
+    <EmbeddedResource Include="Repositories\Templates\SchemaRepository.tmpl" />
+    <EmbeddedResource Include="Repositories\Templates\SchemaRepositoryAddType.tmpl" />
+    <EmbeddedResource Include="Repositories\Templates\SchemaRepositoryMethods.tmpl" />
+    <EmbeddedResource Include="Repositories\Templates\Wrapper.tmpl" />
+    <EmbeddedResource Include="Repositories\Templates\XrefLeftProperty.tmpl" />
+    <EmbeddedResource Include="Repositories\Templates\XrefRightProperty.tmpl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\bam.base\bam.base\bam.base.csproj" />
+    <ProjectReference Include="..\..\bam.data.schema\bam.data.schema\bam.data.schema.csproj" />
+    <ProjectReference Include="..\..\bam.data\bam.data\bam.data\bam.data.csproj" />
+    <ProjectReference Include="..\..\bam.logging\bam.logging\bam.logging\bam.logging.csproj" />
+  </ItemGroup>
+
+</Project>
