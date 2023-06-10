@@ -23,18 +23,18 @@ namespace Bam.Net.Data.Repositories
             InheritingTypePropertyPredicate = (pi) => true;
         }
 
-        public TypeInheritanceSqlWriter(Database db):this()
+        public TypeInheritanceSqlWriter(IDatabase db):this()
         {
             Database = db;
         }
         
-        public Database Database { get; set; }
+        public IDatabase Database { get; set; }
         public List<ISqlStringBuilder> GetInsertStatements(object instance)
         {
             return GetInsertStatements(instance, Database);
         }
 
-        public List<ISqlStringBuilder> GetInsertStatements(object instance, Database db)
+        public List<ISqlStringBuilder> GetInsertStatements(object instance, IDatabase db)
         {
             List<ISqlStringBuilder> results = new List<ISqlStringBuilder>();
             db = db ?? Database;
@@ -65,12 +65,12 @@ namespace Bam.Net.Data.Repositories
             return GetUpdateStatements(instance, type, Database);
         }
 
-        public List<SqlStringBuilder> GetUpdateStatements(object instance, Database db)
+        public List<SqlStringBuilder> GetUpdateStatements(object instance, IDatabase db)
         {
             return GetUpdateStatements(instance, instance.GetType(), db);
         }
 
-        public List<SqlStringBuilder> GetUpdateStatements(object instance, Type type, Database db)
+        public List<SqlStringBuilder> GetUpdateStatements(object instance, Type type, IDatabase db)
         {
             List<SqlStringBuilder> results = new List<SqlStringBuilder>();
             db = db ?? Database;
@@ -100,7 +100,7 @@ namespace Bam.Net.Data.Repositories
             return GetDeleteStatements(instance, type, Database);
         }
 
-        public List<SqlStringBuilder> GetDeleteStatements(object instance, Type type, Database db)
+        public List<SqlStringBuilder> GetDeleteStatements(object instance, Type type, IDatabase db)
         {
             List<SqlStringBuilder> results = new List<SqlStringBuilder>();
             db = db ?? Database;

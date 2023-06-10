@@ -44,7 +44,7 @@ namespace Bam.Net.Data.Repositories
             Logger = Log.Default;
         }
 
-        public DaoRepository(Database database, ILogger logger = null, string schemaName = null)
+        public DaoRepository(IDatabase database, ILogger logger = null, string schemaName = null)
         {
             CtorInit();
             Database = database;
@@ -153,7 +153,7 @@ namespace Bam.Net.Data.Repositories
             set { TypeDaoGenerator.WarningsAsErrors = value; }
         }
 
-		public Database Database { get; set; }
+		public IDatabase Database { get; set; }
 
 		[Verbosity(VerbosityLevel.Information)]
 		public event EventHandler GenerateDaoAssemblySucceeded;		

@@ -8,13 +8,13 @@ namespace Bam.Net.Data.Repositories
 {
     public static class DatabaseExtensions
     {
-        public static SqlStringBuilder WriteSchemaScript(this Database db, SchemaDefinitionCreateResult schemaInfo)
+        public static SqlStringBuilder WriteSchemaScript(this IDatabase db, SchemaDefinitionCreateResult schemaInfo)
         {
             TypeSchemaScriptWriter writer = new TypeSchemaScriptWriter();
             return writer.WriteSchemaScript(db, schemaInfo);
         }
 
-        public static void CommitSchema(this Database db, SchemaDefinitionCreateResult schemaInfo)
+        public static void CommitSchema(this IDatabase db, SchemaDefinitionCreateResult schemaInfo)
         {
             db.ExecuteSql((ISqlStringBuilder)WriteSchemaScript(db, schemaInfo));
         }
