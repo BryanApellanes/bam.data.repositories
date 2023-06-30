@@ -10,7 +10,7 @@ using System.Reflection;
 using Bam.Net.Logging;
 using System.Collections;
 using System.Runtime.CompilerServices;
-using bam.data;
+using Bam.Data;
 
 namespace Bam.Net.Data.Repositories
 {

@@ -1,12 +1,11 @@
-﻿using bam.data.repositories;
-using Bam.Net.CommandLine;
+﻿using Bam.Net.CommandLine;
 using Bam.Net.Data.Schema;
 using Bam.Net.ServiceProxy;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
     public partial class WrapperModel
     {

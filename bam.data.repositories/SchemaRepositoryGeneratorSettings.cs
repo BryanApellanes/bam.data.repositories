@@ -1,4 +1,4 @@
-﻿using bam.data.repositories;
+﻿using Bam.Data.Repositories;
 using Bam.Net.Application;
 //using Bam.Net.Data.Repositories.Handlebars;
 using Bam.Net.Data.Schema;

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace bam.data.repositories
+namespace Bam.Data.Repositories
 {
     public interface ISchemaRepositoryGeneratorSettingsProvider
     {

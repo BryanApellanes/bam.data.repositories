@@ -9,8 +9,10 @@ using System.Threading.Tasks;
 using Bam.Net.Data.Schema;
 using Bam.Net.ServiceProxy;
 using System.Reflection;
+using Bam.Net.Data.Repositories;
+using Bam.Net;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
 	public partial class WrapperModel
 	{
