@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Bam.Net.Data.Repositories
 {
-	public class MetaProvider : Bam.Net.Data.Repositories.IMetaProvider
+    public class MetaProvider : Bam.Net.Data.Repositories.IMetaProvider
 	{
 		public MetaProvider(IObjectPersister objectPersister)
 		{

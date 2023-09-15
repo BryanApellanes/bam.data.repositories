@@ -9,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.IO;
-using Bam.Net;
 using Bam.Net.Logging;
 using Bam.Net.Configuration;
 using System.Configuration;

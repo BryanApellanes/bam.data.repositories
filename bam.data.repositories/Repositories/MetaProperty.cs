@@ -10,7 +10,7 @@ using System.Reflection;
 
 namespace Bam.Net.Data.Repositories
 {
-	public class MetaProperty<T> : MetaProperty
+    public class MetaProperty<T> : MetaProperty
 	{
 		public MetaProperty(Meta meta, PropertyInfo property)
 			: base(meta, property)

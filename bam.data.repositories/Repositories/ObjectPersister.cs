@@ -15,14 +15,14 @@ using Bam.Net.Logging;
 
 namespace Bam.Net.Data.Repositories
 {
-	/// <summary>
-	/// Class used to write objects to disk.  Will 
-	/// write two representations of the object, one
-	/// as an IpcMessage <see cref="Bam.Net.IpcMessage"/>
-	/// and another "searchable" version of all
-	/// the properties in crawlable files.  
-	/// </summary>
-	[Serializable]
+    /// <summary>
+    /// Class used to write objects to disk.  Will 
+    /// write two representations of the object, one
+    /// as an IpcMessage <see cref="Bam.Net.IpcMessage"/>
+    /// and another "searchable" version of all
+    /// the properties in crawlable files.  
+    /// </summary>
+    [Serializable]
 	public class ObjectPersister: Loggable, IObjectPersister
 	{
         /// <summary>
