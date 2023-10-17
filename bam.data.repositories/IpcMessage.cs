@@ -142,7 +142,7 @@ namespace Bam.Net
         {
             if (AcquireLockException != null)
             {
-                LastExceptionMessage = "PID={0}:{1}"._Format(Process.GetCurrentProcess().Id, ex.Message);
+                LastExceptionMessage = "PID={0}:{1}".Format(Process.GetCurrentProcess().Id, ex.Message);
                 AcquireLockException(this, new EventArgs());
             }
         }
@@ -165,13 +165,13 @@ namespace Bam.Net
 
         public string CurrentLockerMachineName { get; set; }
 
-        protected string LockFile => Path.Combine(RootDirectory, "{0}.lock"._Format(Name));
+        protected string LockFile => Path.Combine(RootDirectory, "{0}.lock".Format(Name));
 
         protected string TempLockFile => $"{LockFile}.tmp";
 
-        protected internal string WriteFile => Path.Combine(RootDirectory, "{0}.write"._Format(Name));
+        protected internal string WriteFile => Path.Combine(RootDirectory, "{0}.write".Format(Name));
 
-        protected internal string ReadFile => Path.Combine(RootDirectory, "{0}.read"._Format(Name));
+        protected internal string ReadFile => Path.Combine(RootDirectory, "{0}.read".Format(Name));
 
         protected internal string MessageFile => Path.Combine(RootDirectory, Name);
 

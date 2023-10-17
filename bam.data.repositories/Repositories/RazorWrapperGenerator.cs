@@ -31,7 +31,7 @@ namespace Bam.Net.Data.Repositories
             foreach (Type type in TypeSchema.Tables)
             {
                 WrapperModel model = new WrapperModel(type, TypeSchema, WrapperNamespace, DaoNamespace);
-                string fileName = "{0}Wrapper.cs"._Format(type.Name.TrimNonLetters());
+                string fileName = "{0}Wrapper.cs".Format(type.Name.TrimNonLetters());
                 using (StreamWriter sw = new StreamWriter(Path.Combine(writeSourceDir, fileName)))
                 {
                     sw.Write(model.Render());

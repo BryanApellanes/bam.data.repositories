@@ -113,7 +113,7 @@ namespace Bam.Net.Data.Repositories
         {
             Type daoType = GetDaoType(dcp);
             IDatabase database = dcp.DaoProxyRegistration.Database;
-            Type collectionType = daoType.Assembly.GetType("{0}.{1}Collection"._Format(daoType.Namespace, daoType.Name));
+            Type collectionType = daoType.Assembly.GetType("{0}.{1}Collection".Format(daoType.Namespace, daoType.Name));
             IEnumerable values = (IEnumerable)GetRequestBody(HttpContext.Request).FromJson(daoType.MakeArrayType());
             object collection = collectionType.Construct();
             collection.Invoke("AddRange", values);

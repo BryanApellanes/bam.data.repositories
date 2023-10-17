@@ -481,7 +481,7 @@ namespace Bam.Net.Data.Repositories
                 Message = ex.Message;
                 if (!string.IsNullOrEmpty(ex.StackTrace))
                 {
-                    Message = "{0}:\r\nStackTrace: {1}"._Format(Message, ex.StackTrace);
+                    Message = "{0}:\r\nStackTrace: {1}".Format(Message, ex.StackTrace);
                 }
                 compilationEx = ex;
                 FireGenerateDaoAssemblyFailed(ex);
@@ -645,7 +645,7 @@ namespace Bam.Net.Data.Repositories
         private void SetTempPathProvider()
         {
             TypeSchemaTempPathProvider = (schemaDef, typeSchema) =>
-                System.IO.Path.Combine(RuntimeSettings.ProcessDataFolder, "DaoTemp_{0}"._Format(schemaDef.Name));
+                System.IO.Path.Combine(RuntimeSettings.ProcessDataFolder, "DaoTemp_{0}".Format(schemaDef.Name));
         }
     }
 }

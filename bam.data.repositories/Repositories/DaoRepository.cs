@@ -694,7 +694,7 @@ namespace Bam.Net.Data.Repositories
                 {
                     Assembly daoAssembly = EnsureDaoAssemblyAndSchema();
                     Type baseType = GetBaseType(pocoType);
-                    Type daoType = daoAssembly.GetType("{0}.{1}"._Format(TypeDaoGenerator.DaoNamespace, baseType.Name));
+                    Type daoType = daoAssembly.GetType("{0}.{1}".Format(TypeDaoGenerator.DaoNamespace, baseType.Name));
                     if (daoType == null)
                     {
                         Type[] daoTypes = daoAssembly.GetTypes().Where(t => t.Name.Equals(baseType.Name) && t.IsSubclassOf(typeof(Dao))).ToArray();
@@ -746,7 +746,7 @@ namespace Bam.Net.Data.Repositories
 			}
 
 			Type daoType = GetDaoType(baseOrWrapperType);
-			Type dto = daoType.Assembly.GetType("{0}.{1}Wrapper"._Format(TypeDaoGenerator.WrapperNamespace, baseOrWrapperType.Name));
+			Type dto = daoType.Assembly.GetType("{0}.{1}Wrapper".Format(TypeDaoGenerator.WrapperNamespace, baseOrWrapperType.Name));
 			Type result = dto ?? baseOrWrapperType;
 			return result;
 		}
@@ -885,7 +885,7 @@ namespace Bam.Net.Data.Repositories
 			ITypeXref[] leftXrefs = TypeSchema.Xrefs.Where(xref => xref.Left.Equals(baseType)).ToArray();
 			foreach (TypeXref leftXref in leftXrefs)
 			{
-				string daoXrefPropertyName = "{0}"._Format(leftXref.Right.Name).Pluralize();
+				string daoXrefPropertyName = "{0}".Format(leftXref.Right.Name).Pluralize();
 				if (!handledProperties.Contains(daoXrefPropertyName))
 				{
 					PropertyInfo daoXrefProperty = daoType.GetProperty(daoXrefPropertyName);
@@ -898,7 +898,7 @@ namespace Bam.Net.Data.Repositories
 			ITypeXref[] rightXrefs = TypeSchema.Xrefs.Where(xref => xref.Right.Equals(baseType)).ToArray();
 			foreach (TypeXref rightXref in rightXrefs)
 			{
-				string daoXrefPropertyName = "{0}"._Format(rightXref.Left.Name).Pluralize();
+				string daoXrefPropertyName = "{0}".Format(rightXref.Left.Name).Pluralize();
 				if (!handledProperties.Contains(daoXrefPropertyName))
 				{
 					PropertyInfo daoXrefProperty = daoType.GetProperty(daoXrefPropertyName);
@@ -986,7 +986,7 @@ namespace Bam.Net.Data.Repositories
 			Type dtoType = GetWrapperType(dtoChild.GetType());
 			if (dtoType != null)
 			{
-				string primaryIdPropertyName = "{0}Id"._Format(parentType.Name);
+				string primaryIdPropertyName = "{0}Id".Format(parentType.Name);
 				PropertyInfo primaryIdProperty = dtoType.GetProperty(primaryIdPropertyName);
 				if (primaryIdProperty != null)
 				{

@@ -19,7 +19,7 @@ namespace Bam.Net.Data.Repositories
 			: base()
 		{ }
 		public MissingForeignKeyPropertyException(IEnumerable<string> missingProperties)
-			: base("Missing Foreign Keys: \r\n\t{0}"._Format(missingProperties.ToArray().ToDelimited(s => s, "\r\n\t")))
+			: base("Missing Foreign Keys: \r\n\t{0}".Format(missingProperties.ToArray().ToDelimited(s => s, "\r\n\t")))
 		{ }
 	}
 }
