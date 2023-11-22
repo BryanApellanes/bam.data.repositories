@@ -1204,7 +1204,7 @@ namespace Bam.Net.Data.Repositories
         private void CtorInit(ITypeTableNameProvider tableNameProvider = null, Func<ISchemaDefinition, ITypeSchema, string> schemaTempPathProvider = null)
         {
             TypeSchemaGenerator = new TypeSchemaGenerator(tableNameProvider, schemaTempPathProvider);
-            TypeDaoGenerator = CreateTypeDaoGenerator(TypeSchemaGenerator);//new HandlebarsTypeDaoGenerator(TypeSchemaGenerator);
+            TypeDaoGenerator = CreateTypeDaoGenerator(TypeSchemaGenerator);
             TypeDaoGenerator.SchemaWarning += (o, a) =>
             {
                 FireEvent(SchemaWarning, a);

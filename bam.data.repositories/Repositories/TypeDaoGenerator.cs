@@ -154,7 +154,7 @@ namespace Bam.Net.Data.Repositories
 
         /// <summary>
         /// The namespace containing POCO types to generate dao types for.  Setting 
-        /// the BaseNamespace will also set the DaoNamespace
+        /// the BaseNamespace also sets the DaoNamespace
         /// and WrapperNamespace.
         /// </summary>
         public string BaseNamespace
