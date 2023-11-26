@@ -14,7 +14,7 @@ namespace Bam.Net.Data.Repositories
     public class GeneratedDaoAssemblyInfo: GeneratedAssemblyInfo
     {
         public GeneratedDaoAssemblyInfo() : base() { }
-        public GeneratedDaoAssemblyInfo(string infoFileName, TypeSchema typeSchema, ISchemaDefinition schemaDefintion) 
+        public GeneratedDaoAssemblyInfo(string infoFileName, TypeSchema typeSchema, IDaoSchemaDefinition schemaDefintion) 
             : base(infoFileName)
         {
             TypeSchema = typeSchema;
@@ -32,11 +32,11 @@ namespace Bam.Net.Data.Repositories
 
         [Exclude]
         [JsonIgnore]
-        public TypeSchema TypeSchema { get; set; }
+        public ITypeSchema TypeSchema { get; set; }
 
         [Exclude]
         [JsonIgnore]
-        public ISchemaDefinition SchemaDefinition { get; set; }
+        public IDaoSchemaDefinition SchemaDefinition { get; set; }
 
         string _typeSchemaHash;
         public string TypeSchemaHash

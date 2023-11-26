@@ -1,5 +1,4 @@
-﻿using Bam.Net.Application;
-using Bam.Net.Data.Repositories;
+﻿using Bam.Net.Data.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +9,6 @@ namespace Bam.Data.Repositories
 {
     public interface ISchemaRepositoryGeneratorSettingsProvider
     {
-        SchemaRepositoryGeneratorSettings GetSettings(DaoRepoGenerationConfig daoRepoGenerationConfig);
+        ISchemaRepositoryGeneratorSettings GetSettings(IDaoRepoGenerationConfig daoRepoGenerationConfig);
     }
 }

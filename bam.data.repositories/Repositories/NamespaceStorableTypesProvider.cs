@@ -36,7 +36,7 @@ namespace Bam.Net.CoreServices
             {
                 foreach (Assembly ass in AppDomain.CurrentDomain.GetAssemblies())
                 {
-                    foreach (Type type in ass.GetTypes().Where(TypeDaoGenerator.ClrDaoTypeFilter))
+                    foreach (Type type in ass.GetTypes().Where(TypeToDaoGenerator.ClrDaoTypeFilter))
                     {
                         if (namespaces.Contains(type.Namespace))
                         {

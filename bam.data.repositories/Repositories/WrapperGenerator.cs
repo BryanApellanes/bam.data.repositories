@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Reflection;
 using System.CodeDom.Compiler;
+using Bam.Data.Schema;
 
 namespace Bam.Net.Data.Repositories
 {
@@ -19,14 +20,13 @@ namespace Bam.Net.Data.Repositories
 	/// </summary>
 	public abstract class WrapperGenerator : IAssemblyGenerator, IWrapperGenerator
     {
-        protected WrapperGenerator() { }
-
-		public WrapperGenerator(string wrapperNamespace, string daoNamespace, TypeSchema typeSchema = null)
-		{
-			WrapperNamespace = wrapperNamespace;
-            DaoNamespace = daoNamespace;
-            TypeSchema = typeSchema;
-		}
+        public WrapperGenerator(ISchemaProvider schemaGenerator)
+        {
+            DataNamespaces dataNamespaces = schemaGenerator.GetDataNamespaces();
+            this.WrapperNamespace = dataNamespaces.WrapperNamespace;
+            this.DaoNamespace = dataNamespaces.DaoNamespace;
+            this.TypeSchema = schemaGenerator.CreateTypeSchema();
+        }
 
 		public string WrapperNamespace { get; set; }
         public string DaoNamespace { get; set; }

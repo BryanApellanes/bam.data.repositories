@@ -14,14 +14,14 @@ using Bam.Net;
 
 namespace Bam.Data.Repositories
 {
-	public partial class WrapperModel
+    public class WrapperModel : IRenderable
 	{
 		public WrapperModel(Type pocoType, ITypeSchema schema, string wrapperNamespace = "TypeWrappers", string daoNameSpace = "Daos")
 		{
 			BaseType = pocoType;
 			WrapperNamespace = wrapperNamespace;
             DaoNamespace = daoNameSpace;
-			TypeNamespace = pocoType.Namespace;
+			TypeNamespace = pocoType.Namespace ?? "Types";
             TypeName = pocoType.Name.TrimNonLetters();
             WrapperTypeName = pocoType.ToTypeString(false).Replace(TypeName, $"{TypeName}Wrapper");
             BaseTypeName = pocoType.ToTypeString(false);
@@ -31,7 +31,29 @@ namespace Bam.Data.Repositories
             RightXrefs = schema.Xrefs.Where(xref => xref.Right.Equals(pocoType)).Select(xref => TypeXrefModel.FromTypeXref(xref, daoNameSpace)).ToArray();
 		}
 
-		public string WrapperNamespace { get; set; }
+		public ITemplateRenderer TemplateRenderer { get; set; }
+
+        public virtual string Render()
+        {
+            return TemplateRenderer.Render("Wrapper", this);//return Bam.Net.Handlebars.Render("Wrapper", this);
+        }
+
+        public void Render(Stream output)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Render(ITemplateRenderer renderer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Render(ITemplateRenderer renderer, string templateName, Stream output)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string WrapperNamespace { get; set; }
 
 		public string TypeNamespace { get; set; }
         public string DaoNamespace { get; set; }
@@ -55,7 +77,6 @@ namespace Bam.Data.Repositories
 		/// </summary>
 		public TypeXrefModel[] RightXrefs { get; set; }
 		
-		private Type BaseType { get; set; }
-
+		public Type BaseType { get; set; }
 	}
 }

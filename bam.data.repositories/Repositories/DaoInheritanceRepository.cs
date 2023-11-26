@@ -9,6 +9,7 @@ using System.Data;
 using Bam.Net.Logging;
 using System.Data.Common;
 using System.Collections.Concurrent;
+using Bam.Data.Schema;
 
 namespace Bam.Net.Data.Repositories
 {
@@ -19,21 +20,11 @@ namespace Bam.Net.Data.Repositories
     /// </summary>
     public class DaoInheritanceRepository : DaoRepository
     {
-        public DaoInheritanceRepository(ITypeTableNameProvider tableNameProvider = null, Func<ISchemaDefinition, ITypeSchema, string> schemaTempPathProvider = null)
-            :base(tableNameProvider, schemaTempPathProvider)
+        public DaoInheritanceRepository(ISchemaProvider schemaGenerator, IDaoGenerator daoGenerator, IWrapperGenerator wrapperGenerator, IDatabase? database = null, ILogger? logger = null)
+            :base(schemaGenerator, daoGenerator, wrapperGenerator, database, logger)
         {
             BlockOnChildWrites = true;
             BackgroundThreadQueue = new BackgroundThreadQueue<ISqlStringBuilder> { Process = Execute };
-        }
-
-        public DaoInheritanceRepository(Database database, ILogger logger = null, ITypeTableNameProvider tableNameProvider = null, Func<ISchemaDefinition, ITypeSchema, string> schemaTempPathProvider = null) : this(tableNameProvider, schemaTempPathProvider)
-        {
-            Database = database;
-            TypeSchemaGenerator = new TypeInheritanceSchemaGenerator(tableNameProvider, schemaTempPathProvider);
-            TypeDaoGenerator = new TypeDaoGenerator(TypeSchemaGenerator);
-            Logger = logger ?? Log.Default;
-            TypeDaoGenerator.Subscribe(Logger);
-            TypeSchemaGenerator.Subscribe(Logger);
         }
         
         public new TypeSchema TypeSchema
@@ -54,15 +45,15 @@ namespace Bam.Net.Data.Repositories
             }
         }
 
-        SchemaDefinitionCreateResult _schemaDefinitionCreateResult;
-        protected SchemaDefinitionCreateResult SchemaDefinitionCreateResult
+        DaoSchemaDefinitionCreateResult _schemaDefinitionCreateResult;
+        protected DaoSchemaDefinitionCreateResult SchemaDefinitionCreateResult
         {
             get
             {
                 if(_schemaDefinitionCreateResult == null)
                 {
                     Args.ThrowIf<InvalidOperationException>(!StorableTypes.Any(), "No Types were specified, call AddType for each type to store");
-                    _schemaDefinitionCreateResult = TypeSchemaGenerator.CreateSchemaDefinition(StorableTypes);
+                    _schemaDefinitionCreateResult = SchemaGenerator.CreateDaoSchemaDefinition(StorableTypes);
                 }
                 return _schemaDefinitionCreateResult;
             }                

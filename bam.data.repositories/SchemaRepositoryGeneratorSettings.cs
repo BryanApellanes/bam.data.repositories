@@ -1,13 +1,10 @@
-﻿using Bam.Data.Repositories;
-using Bam.Net.Application;
-//using Bam.Net.Data.Repositories.Handlebars;
+﻿using Bam.Data;
+using Bam.Data.Repositories;
 using Bam.Net.Data.Schema;
-/*using Bam.Net.Data.Schema.Handlebars;
-using Bam.Net.Presentation.Handlebars;*/
 
 namespace Bam.Net.Data.Repositories
 {
-    public class SchemaRepositoryGeneratorSettings
+    public class SchemaRepositoryGeneratorSettings : ISchemaRepositoryGeneratorSettings
     {
         public SchemaRepositoryGeneratorSettings(IDaoCodeWriter daoCodeWriter, IDaoTargetStreamResolver daoTargetStreamResolver, IWrapperGenerator wrapperGenerator)
         {
@@ -19,7 +16,7 @@ namespace Bam.Net.Data.Repositories
         public IDaoCodeWriter DaoCodeWriter { get; set; }
         public IDaoTargetStreamResolver DaoTargetStreamResolver { get; set; }
         public IWrapperGenerator WrapperGenerator { get; set; }
-        public DaoRepoGenerationConfig Config { get; set; }
+        public IDaoRepoGenerationConfig Config { get; set; }
 
         public static ISchemaRepositoryGeneratorSettingsProvider SchemaRepositoryGeneratorSettingsProvider
         {
@@ -27,22 +24,10 @@ namespace Bam.Net.Data.Repositories
             set;
         }
 
-        public static SchemaRepositoryGeneratorSettings FromConfig(DaoRepoGenerationConfig config)
+        public static ISchemaRepositoryGeneratorSettings FromConfig(IDaoRepoGenerationConfig config)
         {
             Args.ThrowIfNull(SchemaRepositoryGeneratorSettingsProvider, $"{nameof(SchemaRepositoryGeneratorSettings)}.{nameof(SchemaRepositoryGeneratorSettingsProvider)}");
             return SchemaRepositoryGeneratorSettingsProvider.GetSettings(config);
-/*            HandlebarsDirectory handlebarsDirectory = new HandlebarsDirectory(config.TemplatePath);
-            HandlebarsEmbeddedResources embeddedResources = new HandlebarsEmbeddedResources(typeof(SchemaRepositoryGenerator).Assembly);
-            return new SchemaRepositoryGeneratorSettings
-            (
-                new HandlebarsDaoCodeWriter(handlebarsDirectory, embeddedResources),
-                new DaoTargetStreamResolver(),
-                new HandlebarsWrapperGenerator()
-                    {HandlebarsDirectory = handlebarsDirectory, HandlebarsEmbeddedResources = embeddedResources}
-            )
-            {
-                Config = config
-            };*/
         }
     }
 }

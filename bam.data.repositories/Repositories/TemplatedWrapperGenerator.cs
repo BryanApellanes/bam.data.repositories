@@ -7,10 +7,18 @@ using System.Text;
 
 namespace Bam.Net.Data.Repositories
 {
-    public class RazorWrapperGenerator: WrapperGenerator 
+    public class TemplatedWrapperGenerator : WrapperGenerator, ITemplatedWrapperGenerator
     {
-        public RazorWrapperGenerator(string wrapperNamespace, string daoNamespace, TypeSchema typeSchema = null) : base(wrapperNamespace, daoNamespace, typeSchema)
-        { }
+        public TemplatedWrapperGenerator(ISchemaProvider schemaGenerator, ITemplateRenderer<WrapperModel> templateRenderer) : base(schemaGenerator)
+        {
+            this.TemplateRenderer = templateRenderer;
+        }
+
+        public ITemplateRenderer<WrapperModel> TemplateRenderer
+        {
+            get;
+            private set;
+        }
 
         readonly object _generateLock = new object();
         public override GeneratedAssemblyInfo GenerateAssembly()
@@ -23,7 +31,7 @@ namespace Bam.Net.Data.Repositories
                 result.Save();
                 return result;
             }
-        }        
+        }
 
         public override void WriteSource(string writeSourceDir)
         {

@@ -22,14 +22,14 @@ namespace Bam.Net.CoreServices.ProtoBuf
         { }
 
         public ProtoFileGenerator(IPropertyNumberer propertyNumberer) 
-            : this(new TypeSchemaGenerator(), propertyNumberer)
+            : this(new SchemaProvider(), propertyNumberer)
         { }
 
-        public ProtoFileGenerator(TypeSchemaGenerator typeSchemaGenerator, IPropertyNumberer propertyNumberer, Func<PropertyInfo, bool> propertyFilter = null)
+        public ProtoFileGenerator(ISchemaProvider schemaGenerator, IPropertyNumberer propertyNumberer, Func<PropertyInfo, bool> propertyFilter = null)
         {
-            Args.ThrowIfNull(typeSchemaGenerator);
+            Args.ThrowIfNull(schemaGenerator);
             Args.ThrowIfNull(propertyNumberer, nameof(propertyNumberer));
-            TypeSchemaGenerator = typeSchemaGenerator;
+            SchemaGenerator = schemaGenerator;
             PropertyNumberer = propertyNumberer;
             OutputDirectory = ".\\Generated_Protobuf";
             PropertyFilter = propertyFilter ?? ((p) => true);
@@ -70,7 +70,7 @@ namespace Bam.Net.CoreServices.ProtoBuf
             try
             {
                 FireEvent(ProtoGenerationStarted);
-                TypeSchema typeSchema = TypeSchemaGenerator.CreateTypeSchema(clrTypes);
+                TypeSchema typeSchema = SchemaGenerator.CreateTypeSchema(clrTypes);
                 protoFileDirectory = protoFileDirectory ?? OutputDirectory;
                 DirectoryInfo outputDir = new DirectoryInfo(protoFileDirectory);
                 string nameSpace = GetNamespace(clrTypes);
@@ -109,7 +109,7 @@ namespace Bam.Net.CoreServices.ProtoBuf
             }
         }
         
-        protected TypeSchemaGenerator TypeSchemaGenerator
+        protected ISchemaProvider SchemaGenerator
         {
             get;set;
         }

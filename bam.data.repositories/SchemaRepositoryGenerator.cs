@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Bam.Net.Application;
+using Bam.Data;
 using Bam.Net.Logging;
 
 namespace Bam.Net.Data.Repositories
@@ -14,9 +14,14 @@ namespace Bam.Net.Data.Repositories
     /// A code and assembly generator used to generate schema
     /// specific dao repositories
     /// </summary>
-    public partial class SchemaRepositoryGenerator : TypeDaoGenerator, IRepositorySourceGenerator
+    public class SchemaRepositoryGenerator : TypeToDaoGenerator, IRepositorySourceGenerator
     {
-        public SchemaRepositoryGenerator(SchemaRepositoryGeneratorSettings settings, ILogger logger = null)
+        public SchemaRepositoryGenerator(ISchemaRepositoryGeneratorSettings settings, ILogger? logger = null)
+            :base(
+                 new SchemaProvider(), 
+                 new Schema.DaoGenerator(settings.DaoCodeWriter, settings.DaoTargetStreamResolver), 
+                 settings.WrapperGenerator
+            )
         {
             if (logger != null)
             {
@@ -28,32 +33,16 @@ namespace Bam.Net.Data.Repositories
             Configure(settings.Config);
         }
 
-        /// <summary>
-        /// Instantiate an instance of SchemaRepositoryGenerator that
-        /// is used to generate a schema specific repository for the
-        /// specified assembly for types in the specified 
-        /// namespace.
-        /// </summary>
-        /// <param name="typeAssembly"></param>
-        /// <param name="sourceNamespace"></param>
-        /// <param name="logger"></param>
-        public SchemaRepositoryGenerator(Assembly typeAssembly, string sourceNamespace, ILogger logger = null)
-            : base(typeAssembly, sourceNamespace, logger)
-        {
-            SourceNamespace = sourceNamespace;
-            BaseRepositoryType = "DaoRepository";
-        }
-
         public ITemplateRenderer TemplateRenderer { get; set; }
 
-        public DaoRepoGenerationConfig Config
+        public IDaoRepoGenerationConfig Config
         {
             get; private set;
         }
 
         public Assembly SourceAssembly { get; set; }
 
-        public void Configure(DaoRepoGenerationConfig config)
+        public void Configure(IDaoRepoGenerationConfig config)
         {
             if (config == null)
             {
@@ -62,7 +51,8 @@ namespace Bam.Net.Data.Repositories
             Config = config;
             CheckIdField = config.CheckForIds;
             BaseRepositoryType = config.UseInheritanceSchema ? "DaoInheritanceRepository" : "DaoRepository";
-            TargetNamespace = Config.FromNameSpace;
+            BaseNamespace = Config.FromNameSpace;
+            
         }
 
         public virtual SchemaTypeModel GetSchemaTypeModel(Type t)
@@ -78,11 +68,11 @@ namespace Bam.Net.Data.Repositories
             AddTypes(SourceAssembly, Config.FromNameSpace);
         }
 
-        public void AddTypes(Assembly typeAssembly, string sourceNamespace)
+        public void AddTypes(Assembly typeAssembly, string baseNamespace)
         {
-            SourceNamespace = sourceNamespace;
+            BaseNamespace = baseNamespace;
             Args.ThrowIfNull(typeAssembly);
-            AddTypes(typeAssembly.GetTypes().Where(t => t.Namespace != null && t.Namespace.Equals(sourceNamespace)));
+            AddTypes(typeAssembly.GetTypes().Where(t => t.Namespace != null && t.Namespace.Equals(baseNamespace)));
         }
 
         public void GenerateRepositorySource()
@@ -93,10 +83,6 @@ namespace Bam.Net.Data.Repositories
             GenerateRepositorySource(Config.WriteSourceTo, Config.SchemaName);
         }
 
-        /// <summary>
-        /// The namespace to analyze for types.
-        /// </summary>
-        public string SourceNamespace { get; set; }
         public string BaseRepositoryType { get; set; }
         public string SchemaRepositoryNamespace => $"{DaoNamespace}.Repository";
 
@@ -122,7 +108,7 @@ namespace Bam.Net.Data.Repositories
             SchemaRepositoryModel schemaModel = new SchemaRepositoryModel
             {
                 BaseRepositoryType = BaseRepositoryType,
-                BaseNamespace = SourceNamespace,
+                BaseNamespace = BaseNamespace,
                 SchemaRepositoryNamespace = SchemaRepositoryNamespace,
                 SchemaName = schemaName,
                 Types = Types.Select(GetSchemaTypeModel).ToArray()

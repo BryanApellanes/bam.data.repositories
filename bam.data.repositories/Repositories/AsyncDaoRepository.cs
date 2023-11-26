@@ -18,11 +18,6 @@ namespace Bam.Net.Data.Repositories
             DaoRepository = daoRepository;
         }
 
-        public AsyncDaoRepository(Database database, ILogger logger = null) 
-            : this(new DaoRepository(database, logger))
-        {
-        }
-
         public override void AddType(Type type)
         {
             DaoRepository.AddType(type);

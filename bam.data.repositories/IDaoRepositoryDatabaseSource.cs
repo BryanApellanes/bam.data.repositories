@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bam.Net.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace Bam.Data.Repositories
 {
-    public interface IWrapperModelRenderProvider
+    public interface IDaoRepositoryDatabaseSource
     {
-        string Render(string templateName, WrapperModel wrapperModel);
+        IDatabase Database { get; set; }
     }
 }

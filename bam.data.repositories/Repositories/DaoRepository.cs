@@ -7,7 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-//using Bam.Net.Data.Repositories.Handlebars;
+using Bam.Data.Repositories;
+using Bam.Data.Schema;
 using Bam.Net.Data.Schema;
 using Bam.Net.Data.SQLite;
 using Bam.Net.Logging;
@@ -23,47 +24,43 @@ namespace Bam.Net.Data.Repositories
     /// the values call Retrieve(id) or Retrieve(uuid).    
     /// </summary>
     [Serializable] // for memory size calculation
-    public class DaoRepository : Repository, IGeneratesDaoAssembly, IHasTypeSchemaTempPathProvider, IQueryFilterable
+    public class DaoRepository : Repository, IDaoRepository, IGeneratesDaoAssembly, IHasTypeSchemaTempPathProvider, IQueryFilterable
     {
-        public DaoRepository()
+        public DaoRepository(ISchemaProvider schemaGenerator, IDaoGenerator daoGenerator, IWrapperGenerator wrapperGenerator)
         {
-            CtorInit();
-            Database = DataProvider.Current.GetSysDatabaseFor(this);
-            Logger = Log.Default;
+            this.SchemaGenerator = schemaGenerator;
+            this.TypeToDaoGenerator = new TypeToDaoGenerator(SchemaGenerator, daoGenerator, wrapperGenerator);
+
+            this.TypeToDaoGenerator.SchemaWarning += (o, a) => FireEvent(SchemaWarning, a);
+
+            this.TypeToDaoGenerator.GenerateDaoAssemblySucceeded += (o, a) =>
+            {
+                GenerateDaoAssemblyEventArgs args = (GenerateDaoAssemblyEventArgs)a;
+                FireEvent(GenerateDaoAssemblySucceeded, args);
+            };
+
+            this.NullifyDaoAssemblyOnAddType = true;
+            this.WrapByDefault = true;
+            this.WarningsAsErrors = true;
+
+            this.Database = DataProvider.Current.GetSysDatabaseFor(this);
+            this.Logger = Log.Default;
         }
 
-        /// <summary>
-        /// Create an instance of DaoRepository
-        /// </summary>
-        /// <param name="tableNameProvider"></param>
-        /// <param name="schemaTempPathProvider"></param>
-        public DaoRepository(ITypeTableNameProvider tableNameProvider, Func<ISchemaDefinition, ITypeSchema, string> schemaTempPathProvider)
+        public DaoRepository(ISchemaProvider schemaGenerator, IDaoGenerator daoGenerator, IWrapperGenerator wrapperGenerator, IDatabase? database, ILogger? logger)
+            : this(schemaGenerator, daoGenerator, wrapperGenerator)
         {
-            CtorInit(tableNameProvider, schemaTempPathProvider);
-            Database = DataProvider.Current.GetSysDatabaseFor(this);
-            Logger = Log.Default;
+            this.Database = database ?? DataProvider.Current.GetSysDatabaseFor(this);
+            this.Logger = logger ?? Log.Default;
+            this.Subscribe(Logger);
         }
 
-        public DaoRepository(IDatabase database, ILogger logger = null, string schemaName = null)
-        {
-            CtorInit();
-            Database = database;
-            Logger = logger ?? Log.Default;
-            Subscribe(Logger);
-            SchemaName = schemaName;
-        }
-
-        protected TypeDaoGenerator TypeDaoGenerator
-        {
-            get; set;
-        }
-
-        protected TypeSchemaGenerator TypeSchemaGenerator
+        protected TypeToDaoGenerator TypeToDaoGenerator
         {
             get; set;
         }
 
-        public Func<TypeSchemaGenerator, TypeDaoGenerator> CreateTypeDaoGenerator
+        protected ISchemaProvider SchemaGenerator
         {
             get; set;
         }
@@ -75,15 +72,21 @@ namespace Bam.Net.Data.Repositories
         {
             get
             {
-                return TypeDaoGenerator.DaoNamespace;
+                return TypeToDaoGenerator.DaoNamespace;
             }
             set
             {
-                TypeDaoGenerator.DaoNamespace = value;
+                TypeToDaoGenerator.DaoNamespace = value;
             }
         }
 
         string _baseNamespace;
+
+        /// <summary>
+        /// The namespace containing POCO types to generate dao types for.  Setting 
+        /// the BaseNamespace also sets the DaoNamespace
+        /// and WrapperNamespace.
+        /// </summary>
         public string BaseNamespace
         {
             get
@@ -93,7 +96,7 @@ namespace Bam.Net.Data.Repositories
             set
             {
                 _baseNamespace = value;
-                TypeDaoGenerator.BaseNamespace = _baseNamespace;
+                TypeToDaoGenerator.BaseNamespace = _baseNamespace;
             }
         }
 
@@ -105,23 +108,23 @@ namespace Bam.Net.Data.Repositories
         {
             get
             {
-                return TypeDaoGenerator.KeepSource;
+                return TypeToDaoGenerator.KeepSource;
             }
             set
             {
-                TypeDaoGenerator.KeepSource = value; 
+                TypeToDaoGenerator.KeepSource = value; 
             }
         }
 
-        public Func<ISchemaDefinition, ITypeSchema, string> TypeSchemaTempPathProvider
+        public Func<IDaoSchemaDefinition, ITypeSchema, string> TypeSchemaTempPathProvider
         {
             get
             {
-                return TypeDaoGenerator.TypeSchemaTempPathProvider;
+                return TypeToDaoGenerator.TypeSchemaTempPathProvider;
             }
             set
             {
-                TypeDaoGenerator.TypeSchemaTempPathProvider = value;
+                TypeToDaoGenerator.TypeSchemaTempPathProvider = value;
             }
         }
 
@@ -129,11 +132,11 @@ namespace Bam.Net.Data.Repositories
         {
             get
             {
-                return TypeDaoGenerator.SchemaName;
+                return TypeToDaoGenerator.SchemaName;
             }
             set
             {
-                TypeDaoGenerator.SchemaName = value;
+                TypeToDaoGenerator.SchemaName = value;
             }
         }
 
@@ -145,12 +148,14 @@ namespace Bam.Net.Data.Repositories
         /// </summary>
         public bool WrapByDefault
         {
-            get;set;
+            get;
+            set;
         }
+
 		public bool WarningsAsErrors
         {
-            get { return TypeDaoGenerator.WarningsAsErrors; }
-            set { TypeDaoGenerator.WarningsAsErrors = value; }
+            get { return TypeToDaoGenerator.WarningsAsErrors; }
+            set { TypeToDaoGenerator.WarningsAsErrors = value; }
         }
 
 		public IDatabase Database { get; set; }
@@ -158,23 +163,23 @@ namespace Bam.Net.Data.Repositories
 		[Verbosity(VerbosityLevel.Information)]
 		public event EventHandler GenerateDaoAssemblySucceeded;		
 
-		public ISchemaDefinition SchemaDefinition
+		public IDaoSchemaDefinition SchemaDefinition
 		{
 			get
 			{
-				return TypeDaoGenerator.SchemaDefinitionCreateResult.SchemaDefinition;
+				return TypeToDaoGenerator.SchemaDefinitionCreateResult.SchemaDefinition;
 			}
 		}
 
         TypeSchema _typeSchema;
-		public TypeSchema TypeSchema
+		public ITypeSchema TypeSchema
 		{
 			get
 			{
                 if(_typeSchema == null)
                 {
                     Initialize();
-                    _typeSchema = TypeSchemaGenerator.CreateTypeSchema(StorableTypes, SchemaName);
+                    _typeSchema = SchemaGenerator.CreateTypeSchema(StorableTypes, SchemaName);
                 }
                 return _typeSchema;
 			}
@@ -237,8 +242,8 @@ namespace Bam.Net.Data.Repositories
 
         public sealed override void Subscribe(ILogger logger)
         {
-            TypeDaoGenerator.Subscribe(logger);
-            TypeSchemaGenerator.Subscribe(logger);
+            TypeToDaoGenerator.Subscribe(logger);
+            SchemaGenerator.Subscribe(logger);
             base.Subscribe(logger);
         }
 
@@ -268,7 +273,7 @@ namespace Bam.Net.Data.Repositories
         public Assembly GenerateDaoAssembly(bool useExisting = true)
         {
             Initialize();
-            _daoAssembly = TypeDaoGenerator.GetDaoAssembly(useExisting);
+            _daoAssembly = TypeToDaoGenerator.GetDaoAssembly(useExisting);
             Log.WarnIf(_daoAssembly == null, "Unable to generate dao assembly");
             return _daoAssembly;
         }
@@ -288,7 +293,7 @@ namespace Bam.Net.Data.Repositories
                             throw new InvalidOperationException("No types were specified.  Call AddType for each type to store.");
                         }
                         isInitialized = true;
-                        TypeDaoGenerator.AddTypes(StorableTypes);
+                        TypeToDaoGenerator.AddTypes(StorableTypes);
                     }
                 }
             }
@@ -298,7 +303,7 @@ namespace Bam.Net.Data.Repositories
         {
             foreach(Assembly assembly in assemblies)
             {
-                TypeDaoGenerator.AddReferenceAssembly(assembly);
+                TypeToDaoGenerator.AddReferenceAssembly(assembly);
             }
         }
 
@@ -633,37 +638,37 @@ namespace Bam.Net.Data.Repositories
         }
         #endregion
 
-        public T First<T>(QueryFilter query) where T: new()
+        public T First<T>(IQueryFilter query) where T: new()
         {
             return Top<T>(1, query).FirstOrDefault();
         }
 
-        public IEnumerable<T> Top<T>(int count, QueryFilter query) where T : new()
+        public IEnumerable<T> Top<T>(int count, IQueryFilter query) where T : new()
         {
             return Top(count, typeof(T), query).CopyAs<T>();
         }
 
-        public IEnumerable<T> Top<T>(int count, QueryFilter query, string sortByColumn, SortOrder sortOrder) where T : new()
+        public IEnumerable<T> Top<T>(int count, IQueryFilter query, string sortByColumn, SortOrder sortOrder) where T : new()
         {
             return Top(count, typeof(T), query, sortByColumn, sortOrder).CopyAs<T>();
         }
 
-        public IEnumerable Top(int count, Type pocoType, QueryFilter query)
+        public IEnumerable Top(int count, Type pocoType, IQueryFilter query)
         {
             return Top(count, pocoType, query, null, SortOrder.Ascending, WrapByDefault);
         }
 
-        public IEnumerable Top(int count, Type pocoType, QueryFilter query, string sortByColumn)
+        public IEnumerable Top(int count, Type pocoType, IQueryFilter query, string sortByColumn)
         {
             return Top(count, pocoType, query, sortByColumn, SortOrder.Ascending, WrapByDefault);
         }
 
-        public IEnumerable Top(int count, Type pocoType, QueryFilter query, string sortByColumn, SortOrder sortOrder)
+        public IEnumerable Top(int count, Type pocoType, IQueryFilter query, string sortByColumn, SortOrder sortOrder)
         {
             return Top(count, pocoType, query, sortByColumn, sortOrder, WrapByDefault);
         }
 
-        public IEnumerable Top(int count, Type pocoType, QueryFilter query, string sortByColumn, SortOrder sortOrder, bool wrap)
+        public IEnumerable Top(int count, Type pocoType, IQueryFilter query, string sortByColumn, SortOrder sortOrder, bool wrap)
         {
             Type daoType = GetDaoType(pocoType);
             MethodInfo topMethod = daoType.GetMethod("Top", new Type[] { typeof(int), typeof(QueryFilter), typeof(string), typeof(SortOrder), typeof(Database) });
@@ -694,7 +699,7 @@ namespace Bam.Net.Data.Repositories
                 {
                     Assembly daoAssembly = EnsureDaoAssemblyAndSchema();
                     Type baseType = GetBaseType(pocoType);
-                    Type daoType = daoAssembly.GetType("{0}.{1}".Format(TypeDaoGenerator.DaoNamespace, baseType.Name));
+                    Type daoType = daoAssembly.GetType("{0}.{1}".Format(TypeToDaoGenerator.DaoNamespace, baseType.Name));
                     if (daoType == null)
                     {
                         Type[] daoTypes = daoAssembly.GetTypes().Where(t => t.Name.Equals(baseType.Name) && t.IsSubclassOf(typeof(Dao))).ToArray();
@@ -708,7 +713,7 @@ namespace Bam.Net.Data.Repositories
 
                     if (daoType == null)
                     {
-                        Logger.Warning("Unable to get dao type for pocoType ({0}): \r\n\tDao Assembly={1}, \r\n\tBase Type={2}, \r\n\tDaoNamespace={3}", pocoType.GetType().Name, daoAssembly.GetFilePath(), baseType.Name, TypeDaoGenerator.DaoNamespace);
+                        Logger.Warning("Unable to get dao type for pocoType ({0}): \r\n\tDao Assembly={1}, \r\n\tBase Type={2}, \r\n\tDaoNamespace={3}", pocoType.GetType().Name, daoAssembly.GetFilePath(), baseType.Name, TypeToDaoGenerator.DaoNamespace);
                     }
                     else
                     {
@@ -746,7 +751,7 @@ namespace Bam.Net.Data.Repositories
 			}
 
 			Type daoType = GetDaoType(baseOrWrapperType);
-			Type dto = daoType.Assembly.GetType("{0}.{1}Wrapper".Format(TypeDaoGenerator.WrapperNamespace, baseOrWrapperType.Name));
+			Type dto = daoType.Assembly.GetType("{0}.{1}Wrapper".Format(TypeToDaoGenerator.WrapperNamespace, baseOrWrapperType.Name));
 			Type result = dto ?? baseOrWrapperType;
 			return result;
 		}
@@ -833,14 +838,14 @@ namespace Bam.Net.Data.Repositories
 			return result;
 		}
 
-		public Dao GetDaoInstance(object baseInstance) // required by generated code
+		public IDao GetDaoInstance(object baseInstance) // required by generated code
 		{
 			ulong id = GetIdValue(baseInstance).Value;
 			Dao dao = GetDaoInstanceById(baseInstance.GetType(), id);
 			return dao;
 		}
 
-		public bool SetChildDaoCollectionValues(object poco, Dao daoInstance)
+		public bool SetChildDaoCollectionValues(object poco, IDao daoInstance)
 		{
 			List<ITypeFk> fkDescriptors = TypeSchema.ForeignKeys.Where(tfk => tfk.PrimaryKeyType == GetBaseType(poco.GetType())).ToList();
 			bool result = false;
@@ -863,7 +868,7 @@ namespace Bam.Net.Data.Repositories
 			return result;
 		}
 
-		public bool SetXrefDaoCollectionValues(object poco, Dao daoInstance)
+		public bool SetXrefDaoCollectionValues(object poco, IDao daoInstance)
 		{
 			Type baseType = GetBaseType(poco.GetType());
 			Type daoType = GetDaoType(baseType);
@@ -1004,7 +1009,7 @@ namespace Bam.Net.Data.Repositories
 			return null;
 		}
 
-        public T Construct<T>() where T : AuditRepoData, new()
+        public T Construct<T>() where T : IAuditRepoData, new()
         {
             T result = new T();
             result.Created = DateTime.UtcNow;
@@ -1093,7 +1098,7 @@ namespace Bam.Net.Data.Repositories
             }
 		}
 
-		private void SetXrefDaoCollectionValues(object pocoOrPocoParent, Dao daoInstance, PropertyInfo daoXrefProperty, PropertyInfo pocoProperty)
+		private void SetXrefDaoCollectionValues(object pocoOrPocoParent, IDao daoInstance, PropertyInfo daoXrefProperty, PropertyInfo pocoProperty)
 		{
 			IEnumerable values = (IEnumerable)pocoProperty.GetValue(pocoOrPocoParent);
 			if (values != null)
@@ -1201,15 +1206,14 @@ namespace Bam.Net.Data.Repositories
             logger.AddEntry(signature, e, message, innerMessage);
         }
 
-        private void CtorInit(ITypeTableNameProvider tableNameProvider = null, Func<ISchemaDefinition, ITypeSchema, string> schemaTempPathProvider = null)
+/*        private void CtorInit(ITypeTableNameProvider tableNameProvider = null, Func<IDaoSchemaDefinition, ITypeSchema, string> schemaTempPathProvider = null)
         {
-            TypeSchemaGenerator = new TypeSchemaGenerator(tableNameProvider, schemaTempPathProvider);
-            TypeDaoGenerator = CreateTypeDaoGenerator(TypeSchemaGenerator);
-            TypeDaoGenerator.SchemaWarning += (o, a) =>
-            {
-                FireEvent(SchemaWarning, a);
-            };
-            TypeDaoGenerator.GenerateDaoAssemblySucceeded += (o, a) =>
+            SchemaGenerator = new SchemaGenerator(tableNameProvider, schemaTempPathProvider);
+            TypeToDaoGenerator = new TypeToDaoGenerator(SchemaGenerator);
+            
+            TypeToDaoGenerator.SchemaWarning += (o, a) => FireEvent(SchemaWarning, a);
+            
+            TypeToDaoGenerator.GenerateDaoAssemblySucceeded += (o, a) =>
             {
                 GenerateDaoAssemblyEventArgs args = (GenerateDaoAssemblyEventArgs)a;
                 FireEvent(GenerateDaoAssemblySucceeded, args);
@@ -1219,6 +1223,6 @@ namespace Bam.Net.Data.Repositories
             WrapByDefault = true;
             WarningsAsErrors = true;
             Logger = Log.Default;
-        }
+        }*/
     }
 }

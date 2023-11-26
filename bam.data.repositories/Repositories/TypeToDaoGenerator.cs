@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Bam.Data.Schema;
 using Bam.Net.Analytics;
 using Bam.Net.CommandLine;
 using Bam.Net.Configuration;
@@ -24,76 +25,48 @@ namespace Bam.Net.Data.Repositories
     /// CLR types.
     /// </summary>
     [Serializable]
-    public class TypeDaoGenerator : Loggable, IGeneratesDaoAssembly, IHasTypeSchemaTempPathProvider, ISourceGenerator
+    public class TypeToDaoGenerator : Loggable, IGeneratesDaoAssembly, IHasTypeSchemaTempPathProvider, ISourceGenerator
     {
-        DaoGenerator _daoGenerator;
+        IDaoGenerator _daoGenerator;
         IWrapperGenerator _wrapperGenerator;
-        TypeSchemaGenerator _typeSchemaGenerator;
+        ISchemaProvider _schemaProvider;
         HashSet<Assembly> _additionalReferenceAssemblies;
         HashSet<Type> _additionalReferenceTypes;
 
-        public TypeDaoGenerator(IDaoCodeWriter codeWriter, IDaoTargetStreamResolver targetStreamResolver)
+        public TypeToDaoGenerator(ISchemaProvider schemaProvider, IDaoGenerator daoGenerator, IWrapperGenerator? wrapperGenerator = null, ILogger? logger = null)
         {
-            _namespace = "TypeDaos";
-            _daoGenerator = new DaoGenerator(codeWriter, targetStreamResolver) { Namespace = DaoNamespace };
-            _wrapperGenerator = new RazorWrapperGenerator(WrapperNamespace, DaoNamespace);
-            _typeSchemaGenerator = new TypeSchemaGenerator();
-            _types = new HashSet<Type>();
-            _additionalReferenceAssemblies = new HashSet<Assembly>();
-            _additionalReferenceTypes = new HashSet<Type>();
-            
-            SetTempPathProvider();
-            SubscribeToSchemaWarnings();
-        }
+            _baseNamespace = DataNamespaces.DefaultBaseNamespace;
 
-        /// <summary>
-        /// Instantiate a new instance of TypeDaoGenerator
-        /// </summary>
-        /// <param name="logger"></param>
-        /// <param name="types"></param>
-        public TypeDaoGenerator(ILogger logger = null, IEnumerable<Type> types = null)
-        {
-            _namespace = "TypeDaos";
-            _daoGenerator = new DaoGenerator(DaoNamespace);
-            _wrapperGenerator = new RazorWrapperGenerator(WrapperNamespace, DaoNamespace);
-            _typeSchemaGenerator = new TypeSchemaGenerator();
+            _schemaProvider = schemaProvider;
+
+            _daoGenerator = daoGenerator;
+            _daoGenerator.Namespace = this.DaoNamespace;
+            SetWrapperGenerator(wrapperGenerator);
+
+            _types = new HashSet<Type>();
             _additionalReferenceAssemblies = new HashSet<Assembly>();
             _additionalReferenceTypes = new HashSet<Type>();
 
             SetTempPathProvider();
             SubscribeToSchemaWarnings();
-            _types = new HashSet<Type>();
             if (logger != null)
             {
                 Subscribe(logger);
             }
-            if(types != null)
+        }
+
+        protected virtual void SetWrapperGenerator(IWrapperGenerator? wrapperGenerator)
+        {
+            if(wrapperGenerator != null)
             {
-                AddTypes(types);
+                _wrapperGenerator = wrapperGenerator;
+                _wrapperGenerator.WrapperNamespace = this.WrapperNamespace;
+                _wrapperGenerator.DaoNamespace = this.DaoNamespace;
             }
-        }
-        
-        /// <summary>
-        /// Instantiate a new instance of TypeDaoGenerator
-        /// </summary>
-        /// <param name="typeAssembly"></param>
-        /// <param name="nameSpace"></param>
-        /// <param name="logger"></param>
-        public TypeDaoGenerator(Assembly typeAssembly, string nameSpace, ILogger logger = null)
-            : this(logger)
-        {
-            BaseNamespace = nameSpace;
-            Args.ThrowIfNull(typeAssembly, "typeAssembly");
-            AddTypes(typeAssembly.GetTypes().Where(t => t.Namespace != null && t.Namespace.Equals(nameSpace)));
-        }
-        
-        public TypeDaoGenerator(TypeSchemaGenerator typeSchemaGenerator) : this()
-        {
-            _typeSchemaGenerator = typeSchemaGenerator;
         }
 
         [Inject]
-        public DaoGenerator DaoGenerator
+        public IDaoGenerator DaoGenerator
         {
             get => _daoGenerator;
             set => _daoGenerator = value;
@@ -106,10 +79,10 @@ namespace Bam.Net.Data.Repositories
             set => _wrapperGenerator = value;
         }
 
-        protected TypeSchemaGenerator TypeSchemaGenerator
+        protected ISchemaProvider SchemaProvider
         {
-            get => _typeSchemaGenerator;
-            set => _typeSchemaGenerator = value;
+            get => _schemaProvider;
+            set => _schemaProvider = value;
         }
 
         /// <summary>
@@ -135,22 +108,7 @@ namespace Bam.Net.Data.Repositories
 
         public bool CheckIdField { get; set; }
 
-        string _namespace;
-
-        /// <summary>
-        /// The namespace containing POCO types to generate dao types for.  Setting 
-        /// the TargetNamespace will also set the DaoNamespace
-        /// and WrapperNamespace. This is the 
-        /// same as BaseNamespace and exists for contextual intuitiveness.
-        /// </summary>
-        /// <value>
-        /// The target namespace.
-        /// </value>
-        public string TargetNamespace
-        {
-            get => BaseNamespace;
-            set => BaseNamespace = value;
-        }
+        string _baseNamespace;
 
         /// <summary>
         /// The namespace containing POCO types to generate dao types for.  Setting 
@@ -159,10 +117,10 @@ namespace Bam.Net.Data.Repositories
         /// </summary>
         public string BaseNamespace
         {
-            get => _namespace;
+            get => _baseNamespace;
             set
             {
-                _namespace = value;
+                _baseNamespace = value;
                 _daoGenerator.Namespace = DaoNamespace;
                 _wrapperGenerator.WrapperNamespace = WrapperNamespace;
                 _wrapperGenerator.DaoNamespace = DaoNamespace;
@@ -172,7 +130,7 @@ namespace Bam.Net.Data.Repositories
         string _daoNamespace;
         public string DaoNamespace
         {
-            get => _daoNamespace ?? $"{_namespace}.Dao";
+            get => _daoNamespace ?? $"{_baseNamespace}.Dao";
             set
             {
                 _daoNamespace = value;
@@ -184,7 +142,7 @@ namespace Bam.Net.Data.Repositories
         string _wrapperNamespace;
         public string WrapperNamespace
         {
-            get => _wrapperNamespace ?? $"{_namespace}.Wrappers";
+            get => _wrapperNamespace ?? $"{_baseNamespace}.Wrappers";
             set
             {
                 _wrapperNamespace = value;
@@ -209,7 +167,7 @@ namespace Bam.Net.Data.Repositories
 
         public override void Subscribe(ILogger logger)
         {
-            _typeSchemaGenerator.Subscribe(logger);
+            _schemaProvider.Subscribe(logger);
             base.Subscribe(logger);
         }
 
@@ -298,7 +256,7 @@ namespace Bam.Net.Data.Repositories
             if (info == null)
             {
                 TypeSchema typeSchema = SchemaDefinitionCreateResult.TypeSchema;
-                ISchemaDefinition schemaDef = SchemaDefinitionCreateResult.SchemaDefinition;
+                IDaoSchemaDefinition schemaDef = SchemaDefinitionCreateResult.SchemaDefinition;
                 string schemaName = schemaDef.Name;
                 string schemaHash = typeSchema.Hash;
                 info = new GeneratedDaoAssemblyInfo(schemaName, typeSchema, schemaDef);
@@ -328,9 +286,9 @@ namespace Bam.Net.Data.Repositories
             return info.GetAssembly();
         }
 
-        SchemaDefinitionCreateResult _schemaDefinitionCreateResult;
+        DaoSchemaDefinitionCreateResult _schemaDefinitionCreateResult;
         object _schemaDefinitionCreateResultLock = new object();
-        public SchemaDefinitionCreateResult SchemaDefinitionCreateResult
+        public DaoSchemaDefinitionCreateResult SchemaDefinitionCreateResult
         {
             get
             {
@@ -351,7 +309,7 @@ namespace Bam.Net.Data.Repositories
         [Verbosity(VerbosityLevel.Warning, SenderMessageFormat = "Couldn't delete folder {TempPath}:\r\nMessage: {Message}")]
         public event EventHandler DeleteDaoTempFailed;
 
-        public Func<ISchemaDefinition, ITypeSchema, string> TypeSchemaTempPathProvider { get; set; }
+        public Func<IDaoSchemaDefinition, ITypeSchema, string> TypeSchemaTempPathProvider { get; set; }
 
         [Verbosity(VerbosityLevel.Warning, SenderMessageFormat = "TypeSchema difference detected\r\n {OldInfoString} \r\n *** \r\n {NewInfoString}")]
         public event EventHandler SchemaDifferenceDetected;
@@ -445,22 +403,22 @@ namespace Bam.Net.Data.Repositories
         /// </summary>
         /// <param name="schemaName"></param>
         /// <returns></returns>
-        protected internal SchemaDefinitionCreateResult CreateSchemaDefinition(string schemaName = null)
+        protected internal DaoSchemaDefinitionCreateResult CreateSchemaDefinition(string schemaName = null)
         {
-            return _typeSchemaGenerator.CreateSchemaDefinition(_types, schemaName);
+            return _schemaProvider.CreateDaoSchemaDefinition(_types, schemaName);
         }
 
-        protected internal virtual bool GenerateDaoAssembly(TypeSchema typeSchema, out CompilationException compilationEx)
+        protected internal virtual bool GenerateDaoAssembly(ITypeSchema typeSchema, out CompilationException compilationEx)
         {
             try
             {
                 compilationEx = null;
-                ISchemaDefinition schema = SchemaDefinitionCreateResult.SchemaDefinition;
+                IDaoSchemaDefinition schema = SchemaDefinitionCreateResult.SchemaDefinition;
                 string assemblyName = $"{schema.Name}.dll";
 
                 string writeSourceTo = TypeSchemaTempPathProvider(schema, typeSchema);
-                CompilerResults results = GenerateAndCompile(assemblyName, writeSourceTo);
-                GeneratedDaoAssemblyInfo info = new GeneratedDaoAssemblyInfo(schema.Name, results)
+                Assembly assembly = GenerateAndCompile(assemblyName, writeSourceTo);
+                GeneratedDaoAssemblyInfo info = new GeneratedDaoAssemblyInfo(schema.Name, assembly)
                 {
                     TypeSchema = typeSchema,
                     SchemaDefinition = schema
@@ -499,7 +457,7 @@ namespace Bam.Net.Data.Repositories
             FireEvent(GenerateDaoAssemblyFailed, new GenerateDaoAssemblyEventArgs(ex));
         }
         
-        protected internal CompilerResults GenerateAndCompile(string assemblyNameToCreate, string writeSourceTo)
+        protected internal Assembly GenerateAndCompile(string assemblyNameToCreate, string writeSourceTo)
         {
             TryDeleteDaoTemp(writeSourceTo);
             GenerateSource(writeSourceTo);
@@ -519,7 +477,7 @@ namespace Bam.Net.Data.Repositories
             GenerateWrappers(SchemaDefinitionCreateResult.TypeSchema, writeSourceTo);
         }
 
-        protected internal void GenerateDaos(ISchemaDefinition schema, string writeSourceTo)
+        protected internal void GenerateDaos(IDaoSchemaDefinition schema, string writeSourceTo)
         {
             _daoGenerator.Generate(schema, writeSourceTo);
         }
@@ -529,10 +487,13 @@ namespace Bam.Net.Data.Repositories
             _wrapperGenerator.Generate(schema, writeSourceTo);
         }
 
-        protected internal CompilerResults Compile(string assemblyNameToCreate, string writeSourceTo)
+        protected internal Assembly Compile(string assemblyNameToCreate, string writeSourceTo)
         {
             HashSet<string> references = GetReferenceAssemblies();
-            CompilerResults results = AdHocCSharpCompiler.CompileDirectories(new DirectoryInfo[] { new DirectoryInfo(writeSourceTo) }, assemblyNameToCreate, references.ToArray(), false);
+            RoslynCompiler compiler = new RoslynCompiler();
+            references.Each(path => compiler.AddAssemblyReference(path));
+
+            Assembly results = compiler.CompileDirectoriesToAssembly(assemblyNameToCreate, new DirectoryInfo[] { new DirectoryInfo(writeSourceTo) });
 
             return results;
         }
@@ -562,7 +523,7 @@ namespace Bam.Net.Data.Repositories
 
         protected virtual HashSet<string> GetDefaultReferenceAssemblies()
         {
-            HashSet<string> references = new HashSet<string>(DaoGenerator.DefaultReferenceAssemblies.ToArray())
+            HashSet<string> references = new HashSet<string>(Schema.DaoGenerator.DefaultReferenceAssemblies.ToArray())
             {
                 typeof(JsonIgnoreAttribute).Assembly.GetFileInfo().FullName
             };
@@ -582,7 +543,7 @@ namespace Bam.Net.Data.Repositories
             DaoRepositorySchemaWarningEventArgs drswea = new DaoRepositorySchemaWarningEventArgs { ClassName = referencingClassName, PropertyName = propertyName, PropertyType = "foreign key" };
             return drswea;
         }
-        private void GenerateOrThrow(ISchemaDefinition schema, TypeSchema typeSchema)
+        private void GenerateOrThrow(IDaoSchemaDefinition schema, TypeSchema typeSchema)
         {
             string tempPath = TypeSchemaTempPathProvider(schema, typeSchema);
             if (Directory.Exists(tempPath))
@@ -636,7 +597,7 @@ namespace Bam.Net.Data.Repositories
 
         private void SubscribeToSchemaWarnings()
         {
-            _typeSchemaGenerator.Subscribe(VerbosityLevel.Warning, (l, a) =>
+            _schemaProvider.Subscribe(VerbosityLevel.Warning, (l, a) =>
             {
                 FireEvent(TypeSchemaWarning, l, a);
             });
