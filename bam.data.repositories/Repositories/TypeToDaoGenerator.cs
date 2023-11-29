@@ -13,6 +13,7 @@ using Bam.Net.Analytics;
 using Bam.Net.CommandLine;
 using Bam.Net.Configuration;
 using Bam.Net.CoreServices.AssemblyManagement;
+using Bam.Net.Data.Qi;
 using Bam.Net.Data.Schema;
 using Bam.Net.Logging;
 using Bam.Net.Services;
@@ -408,7 +409,7 @@ namespace Bam.Net.Data.Repositories
             return _schemaProvider.CreateDaoSchemaDefinition(_types, schemaName);
         }
 
-        protected internal virtual bool GenerateDaoAssembly(ITypeSchema typeSchema, out CompilationException compilationEx)
+        protected internal virtual bool GenerateDaoAssembly(ITypeSchema typeSchema, out Exception compilationEx)
         {
             try
             {
@@ -434,15 +435,19 @@ namespace Bam.Net.Data.Repositories
 
                 return true;
             }
-            catch (CompilationException ex)
+            catch(RoslynCompilationException rex)
             {
-                Message = ex.Message;
-                if (!string.IsNullOrEmpty(ex.StackTrace))
-                {
-                    Message = "{0}:\r\nStackTrace: {1}".Format(Message, ex.StackTrace);
-                }
-                compilationEx = ex;
-                FireGenerateDaoAssemblyFailed(ex);
+                Message = rex.GetMessageAndStackTrace();
+                compilationEx = rex;
+                FireGenerateDaoAssemblyFailed(rex);
+                return false;
+            }
+            // TODO: eliminate the need for this catch block and delete it.
+            catch (CompilationException cex)
+            {
+                Message = cex.GetMessageAndStackTrace();
+                compilationEx = cex;
+                FireGenerateDaoAssemblyFailed(cex);
                 return false;
             }
         }
@@ -523,9 +528,10 @@ namespace Bam.Net.Data.Repositories
 
         protected virtual HashSet<string> GetDefaultReferenceAssemblies()
         {
-            HashSet<string> references = new HashSet<string>(Schema.DaoGenerator.DefaultReferenceAssemblies.ToArray())
+            HashSet<string> references = new HashSet<string>(RoslynCompiler.DefaultAssembliesToReference.Select(a => a.GetFileInfo().FullName).ToArray())
             {
-                typeof(JsonIgnoreAttribute).Assembly.GetFileInfo().FullName
+                typeof(JsonIgnoreAttribute).Assembly.GetFileInfo().FullName,
+                typeof(Qi.Qi).Assembly.GetFileInfo().FullName,
             };
             return references;
         }
@@ -551,7 +557,7 @@ namespace Bam.Net.Data.Repositories
                 string newPath = tempPath.GetNextDirectoryName();
                 Directory.Move(tempPath, newPath);
             }
-            if (!GenerateDaoAssembly(typeSchema, out CompilationException compilationException))
+            if (!GenerateDaoAssembly(typeSchema, out Exception compilationException))
             {
                 throw new DaoGenerationException(SchemaName, typeSchema.Hash, Types.ToArray(), compilationException);
             }

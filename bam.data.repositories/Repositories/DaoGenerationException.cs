@@ -14,9 +14,9 @@ namespace Bam.Net.Data.Repositories
 	public class DaoGenerationException: Exception
 	{
         protected DaoGenerationException(SerializationInfo info, StreamingContext context) { }
-		public DaoGenerationException(string schemaName, string schemaHash, Type[] types, CompilationException compilationEx) : base(GetMessage(schemaName, schemaHash, types, compilationEx)) { }
+		public DaoGenerationException(string schemaName, string schemaHash, Type[] types, Exception compilationEx) : base(GetMessage(schemaName, schemaHash, types, compilationEx)) { }
 
-		private static string GetMessage(string schemaName, string schemaHash, Type[] types, CompilationException compilationEx)
+        private static string GetMessage(string schemaName, string schemaHash, Type[] types, Exception compilationEx)
 		{
 			StringBuilder builder = new StringBuilder();
 			builder.AppendFormat("Unable to Generate Dao Assembly for {0} ({1}).\r\nSpecified Types:\r\n", schemaName, schemaHash);
