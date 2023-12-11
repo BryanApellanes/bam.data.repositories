@@ -8,9 +8,10 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Bam.Console;
+using Bam.Data.Repositories;
 using Bam.Data.Schema;
 using Bam.Net.Analytics;
-using Bam.Net.CommandLine;
 using Bam.Net.Configuration;
 using Bam.Net.CoreServices.AssemblyManagement;
 using Bam.Net.Data.Qi;
@@ -104,8 +105,6 @@ namespace Bam.Net.Data.Repositories
                     );
             }
         }
-
-        public bool IncludeModifiedBy { get; set; }
 
         public bool CheckIdField { get; set; }
 
@@ -312,6 +311,9 @@ namespace Bam.Net.Data.Repositories
 
         public Func<IDaoSchemaDefinition, ITypeSchema, string> TypeSchemaTempPathProvider { get; set; }
 
+        /// <summary>
+        /// The event that is raised when a difference is detected in a previous run of the generator.
+        /// </summary>
         [Verbosity(VerbosityLevel.Warning, SenderMessageFormat = "TypeSchema difference detected\r\n {OldInfoString} \r\n *** \r\n {NewInfoString}")]
         public event EventHandler SchemaDifferenceDetected;
         public string OldInfoString { get; set; }
@@ -418,11 +420,13 @@ namespace Bam.Net.Data.Repositories
                 string assemblyName = $"{schema.Name}.dll";
 
                 string writeSourceTo = TypeSchemaTempPathProvider(schema, typeSchema);
-                Assembly assembly = GenerateAndCompile(assemblyName, writeSourceTo);
+                byte[] binaryAssembly = GenerateAndCompile(assemblyName, writeSourceTo);
+                Assembly assembly = Assembly.Load(binaryAssembly);
                 GeneratedDaoAssemblyInfo info = new GeneratedDaoAssemblyInfo(schema.Name, assembly)
                 {
                     TypeSchema = typeSchema,
-                    SchemaDefinition = schema
+                    SchemaDefinition = schema,
+                    AssemblyBytes = binaryAssembly
                 };
                 info.Save();
 
@@ -462,7 +466,7 @@ namespace Bam.Net.Data.Repositories
             FireEvent(GenerateDaoAssemblyFailed, new GenerateDaoAssemblyEventArgs(ex));
         }
         
-        protected internal Assembly GenerateAndCompile(string assemblyNameToCreate, string writeSourceTo)
+        protected internal byte[] GenerateAndCompile(string assemblyNameToCreate, string writeSourceTo)
         {
             TryDeleteDaoTemp(writeSourceTo);
             GenerateSource(writeSourceTo);
@@ -492,15 +496,13 @@ namespace Bam.Net.Data.Repositories
             _wrapperGenerator.Generate(schema, writeSourceTo);
         }
 
-        protected internal Assembly Compile(string assemblyNameToCreate, string writeSourceTo)
+        protected internal byte[] Compile(string assemblyNameToCreate, string writeSourceTo)
         {
-            HashSet<string> references = GetReferenceAssemblies();
             RoslynCompiler compiler = new RoslynCompiler();
-            references.Each(path => compiler.AddAssemblyReference(path));
-
-            Assembly results = compiler.CompileDirectoriesToAssembly(assemblyNameToCreate, new DirectoryInfo[] { new DirectoryInfo(writeSourceTo) });
-
-            return results;
+            compiler.AddMetadataReferenceResolver(new TypeSchemaMetadataReferenceResolver(SchemaDefinitionCreateResult.TypeSchema));
+            compiler.AddMetadataReferenceResolver(new DaoGeneratorMetadataReferenceResolver());
+            compiler.AddMetadataReferenceResolver(new StaticAssemblyListReferencePackMetadataReferenceResolver("System.Xml.ReaderWriter"));
+            return compiler.CompileDirectories(assemblyNameToCreate, new DirectoryInfo[] { new DirectoryInfo(writeSourceTo) });
         }
 
         protected HashSet<string> GetReferenceAssemblies()
@@ -595,9 +597,7 @@ namespace Bam.Net.Data.Repositories
             OldInfoString = info.TypeSchemaInfo ?? string.Empty;
             NewInfoString = typeSchema.ToString();
             DiffReport diff = DiffReport.Create(OldInfoString, NewInfoString);
-            // TODO: inject this and log
-            ConsoleDiffReportFormatter diffFormatter = new ConsoleDiffReportFormatter(diff);
-            diffFormatter.Format(); // outputs to console
+            
             FireEvent(SchemaDifferenceDetected, new SchemaDifferenceEventArgs { GeneratedDaoAssemblyInfo = info, TypeSchema = typeSchema, DiffReport = diff });
         }
 
@@ -609,6 +609,7 @@ namespace Bam.Net.Data.Repositories
             });
         }
         
+        // TODO: encapsulate this functionality and inject
         private void SetTempPathProvider()
         {
             TypeSchemaTempPathProvider = (schemaDef, typeSchema) =>

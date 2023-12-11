@@ -375,7 +375,7 @@ namespace Bam.Net.Data.Repositories
 				Type daoType = GetDaoType(GetBaseType(type));
 				Dao daoInstance = daoType.Construct<Dao>();
 				daoInstance.ForceInsert = true;
-				object poco = SetDaoInstancePropertiesAndSave(toCreate, daoInstance);
+				object poco = SaveDaoInstanceProperties(toCreate, daoInstance);
 				return poco;
 			}
 			catch (Exception ex)
@@ -401,7 +401,7 @@ namespace Bam.Net.Data.Repositories
             return (T)Retrieve(typeof(T), id);
         }
 
-        public override object Retrieve(Type objectType, long id)
+        public override object? Retrieve(Type objectType, long id)
         {
             try
             {
@@ -409,7 +409,7 @@ namespace Bam.Net.Data.Repositories
                 Dao daoInstance = GetDaoInstanceById(objectType, id);
                 if (daoInstance != null)
                 {
-                    return GetWrapperInstance(objectType, daoInstance);
+                    return CreateWrapperCopy(objectType, daoInstance);
                 }
                 return null;
             }
@@ -421,7 +421,7 @@ namespace Bam.Net.Data.Repositories
             }
         }
 
-        public override object Retrieve(Type objectType, ulong id)
+        public override object? Retrieve(Type objectType, ulong id)
 		{
 			try
 			{
@@ -429,7 +429,7 @@ namespace Bam.Net.Data.Repositories
 				Dao daoInstance = GetDaoInstanceById(objectType, id);
 				if (daoInstance != null)
 				{
-					return GetWrapperInstance(objectType, daoInstance);
+					return CreateWrapperCopy(objectType, daoInstance);
 				}
 				return null;
 			}
@@ -441,12 +441,24 @@ namespace Bam.Net.Data.Repositories
 			}
 		}
 
+        /// <summary>
+        /// Retrieve the object with the specified uuid.
+        /// </summary>
+        /// <typeparam name="T">The type.</typeparam>
+        /// <param name="uuid"></param>
+        /// <returns></returns>
         public override T Retrieve<T>(string uuid)
         {
             return (T)Retrieve(typeof(T), uuid);
         }
 
-		public override object Retrieve(Type objectType, string uuid)
+        /// <summary>
+        /// Retrieve the object with the specified uuid.
+        /// </summary>
+        /// <param name="objectType">The type.</param>
+        /// <param name="uuid">The universally unique identifier.</param>
+        /// <returns>The result.</returns>
+		public override object? Retrieve(Type objectType, string uuid)
 		{
 			try
 			{
@@ -454,7 +466,7 @@ namespace Bam.Net.Data.Repositories
 				Dao daoInstance = GetDaoInstanceByUniversalIdentifier(objectType, uuid);
 				if (daoInstance != null)
 				{
-					return GetWrapperInstance(objectType, daoInstance);
+					return CreateWrapperCopy(objectType, daoInstance);
 				}
 				return null;
 			}
@@ -466,12 +478,22 @@ namespace Bam.Net.Data.Repositories
 			}
 		}
 
-		public override IEnumerable<T> RetrieveAll<T>()// where T: new()
+        /// <summary>
+        /// Retrieve all entries for the specified generic type.
+        /// </summary>
+        /// <typeparam name="T">The type.</typeparam>
+        /// <returns>A collection of results.</returns>
+		public override IEnumerable<T> RetrieveAll<T>()
 		{
             WarnRetrieveAll(typeof(T));
 			return RetrieveAll(typeof(T)).CopyAs<T>();
 		}
 
+        /// <summary>
+        /// Retrieve all entries for the specified type.
+        /// </summary>
+        /// <param name="dtoOrPocoType">The type.</param>
+        /// <returns>A collection of results.</returns>
 		public override IEnumerable<object> RetrieveAll(Type dtoOrPocoType)
 		{
             Args.ThrowIfNull(Database, "Database");
@@ -482,6 +504,12 @@ namespace Bam.Net.Data.Repositories
             return new List<object>((IEnumerable<object>)getterMethod.Invoke(null, new object[] { Database }));
         }
 
+        /// <summary>
+        /// Retrieve all entries of the specified type in the specified batch size.
+        /// </summary>
+        /// <param name="dtoOrPocoType">The type.</param>
+        /// <param name="batchSize">The batch size.</param>
+        /// <param name="processor">The action to perform on each batch.</param>
         public override void BatchRetrieveAll(Type dtoOrPocoType, int batchSize, Action<IEnumerable<object>> processor)
         {
             Args.ThrowIfNull(Database, "Database");
@@ -492,68 +520,120 @@ namespace Bam.Net.Data.Repositories
             getterMethod.Invoke(null, new object[] { batchSize, processor, Database });
         }
 
+        /// <summary>
+        /// Execute a non typed query.
+        /// </summary>
+        /// <param name="propertyName">The property.</param>
+        /// <param name="value">The value.</param>
+        /// <returns>A collection of results.</returns>
 		public override IEnumerable<object> Query(string propertyName, object value)
 		{
 			return Query(DefaultType, Bam.Net.Data.Query.Where(propertyName) == value).CopyAs(DefaultType);
 		}
-        
-		public override IEnumerable<T> Query<T>(Func<T, bool> predicate)
+
+        /// <summary>
+        /// Execute a query.
+        /// </summary>
+        /// <remarks>
+        /// Note: hat this method retrieves all the instances of the specified type and then filters them using the specified filterPredicate function.  This will have a detrimental affect on performance if many entries exist for the specified type.
+        /// </remarks>
+        /// <typeparam name="T">The type.</typeparam>
+        /// <param name="filterPredicate">The filter predicate.</param>
+        /// <returns>A collection of results.</returns>
+        public override IEnumerable<T> Query<T>(Func<T, bool> filterPredicate)
 		{
             WarnRetrieveAll<T>();
-            return RetrieveAll(typeof(T)).CopyAs<T>().Where(predicate);
+            return RetrieveAll(typeof(T)).CopyAs<T>().Where(filterPredicate);
 		}
 
-		public override IEnumerable<object> Query(Type type, Func<object, bool> predicate)
+        /// <summary>
+        /// Execute a query.
+        /// </summary>
+        /// <remarks>
+        /// Note: hat this method retrieves all the instances of the specified type and then filters them using the specified filterPredicate function.  This will have a detrimental affect on performance if many entries exist for the specified type.
+        /// </remarks>
+        /// <param name="type">The type.</param>
+        /// <param name="filterPredicate">The filter predicate.</param>
+        /// <returns>A collection of results.</returns>
+		public override IEnumerable<object> Query(Type type, Func<object, bool> filterPredicate)
 		{
             WarnRetrieveAll(type);
-            return RetrieveAll(type).CopyAs(type).Where(predicate);
+            return RetrieveAll(type).CopyAs(type).Where(filterPredicate);
 		}
 
-		public override IEnumerable<T> Query<T>(dynamic query) 
+        /// <summary>
+        /// Execute a query using the specified dynamic object as equality filters.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="queryArguments"></param>
+        /// <returns>A collection of results.</returns>
+		public override IEnumerable<T> Query<T>(dynamic queryArguments) 
 		{
-            if(query is QueryFilter casted)
+            if(queryArguments is QueryFilter casted)
             {
                 return Query<T>(casted);
             }
-            return Query<T>((QueryFilter)QueryFilter.FromDynamic(query));
+            return Query<T>((QueryFilter)QueryFilter.FromDynamic(queryArguments));
 		}
 
-        public override IEnumerable<T> Query<T>(Dictionary<string, object> queryParameters)
+        /// <summary>
+        /// Execute a query using the specified arguments as equality filters.
+        /// </summary>
+        /// <typeparam name="T">The type.</typeparam>
+        /// <param name="queryArguments">The query arguments.</param>
+        /// <returns>A collection of results.</returns>
+        public override IEnumerable<T> Query<T>(Dictionary<string, object> queryArguments)
         {
-            QueryFilter filter = CreateQueryFilter(queryParameters);
+            QueryFilter filter = CreateQueryFilter(queryArguments);
             return Query<T>(filter);
         }
 
-        public override IEnumerable<object> Query(Type type, Dictionary<string, object> queryParameters)
+        /// <summary>
+        /// Execute a query using the specified arguments as equality filters.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <param name="queryArguments">The query arguments.</param>
+        /// <returns>A collection of results.</returns>
+        public override IEnumerable<object> Query(Type type, Dictionary<string, object> queryArguments)
         {
-            QueryFilter filter = CreateQueryFilter(queryParameters);
+            QueryFilter filter = CreateQueryFilter(queryArguments);
             return Query(type, filter);
         }
 
-		/// <summary>
-		/// Updates the repository instance that represents the specified 
-		/// value.  
-		/// </summary>
-		/// <typeparam name="T"></typeparam>
-		/// <param name="toUpdate"></param>
-		/// <returns></returns>
-		public override T Update<T>(T toUpdate)
+        /// <summary>
+        /// Update the specified object instance.
+        /// </summary>
+        /// <typeparam name="T">The type.</typeparam>
+        /// <param name="toUpdate">The object instance to update.</param>
+        /// <returns>The updated object instance.</returns>
+        public override T Update<T>(T toUpdate)
 		{
 			return (T)Update((object)toUpdate);
 		}
+
+        /// <summary>
+        /// Update the specified object instance.
+        /// </summary>
+        /// <param name="toUpdate">The object instance to update.</param>
+        /// <returns>A wrapped copy of the specified objec instance, or null in the case of an exception.  See `LastException` to determine what exception occurred.</returns>
         public override object Update(object toUpdate)
         {
             return Update(toUpdate.GetType(), toUpdate);
         }
 
+        /// <summary>
+        /// Update the specified object instance.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <param name="toUpdate">The object instance to update.</param>
+        /// <returns>A wrapped copy of the specified objec instance, or null in the case of an exception.  See `LastException` to determine what exception occurred.</returns>
         public override object Update(Type type, object toUpdate)
 		{
 			try
 			{
 				Initialize();
 				Dao daoInstance = GetDaoInstanceById(type, GetIdValue(toUpdate).Value); 
-				object poco = SetDaoInstancePropertiesAndSave(toUpdate, daoInstance);
-				return poco;
+				return SaveDaoInstanceProperties(toUpdate, daoInstance);
 			}
 			catch (Exception ex)
 			{
@@ -563,16 +643,33 @@ namespace Bam.Net.Data.Repositories
 			}
 		}
 
+        /// <summary>
+        /// Delete the specified object instance.
+        /// </summary>
+        /// <typeparam name="T">The type.</typeparam>
+        /// <param name="toDelete">The object instance to delete.</param>
+        /// <returns>A value that indicates whether the operation succeeded.</returns>
 		public override bool Delete<T>(T toDelete)
 		{
 			return Delete((object)toDelete);
 		}
 
+        /// <summary>
+        /// Delete the specified object instance.
+        /// </summary>
+        /// <param name="toDelete">The object instance to delete.</param>
+        /// <returns>A value that indicates whether the operation succeeded.</returns>
         public override bool Delete(object toDelete)
         {
             return Delete(toDelete.GetType(), toDelete);
         }
 
+        /// <summary>
+        /// Delete the specified instance.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <param name="toDelete">The object instance to delete.</param>
+        /// <returns>A value that indicates whether the operation succeeded.</returns>
         public override bool Delete(Type type, object toDelete)
 		{
 			try
@@ -596,6 +693,12 @@ namespace Bam.Net.Data.Repositories
 			}
 		}
 
+        /// <summary>
+        /// Execute the specified expression as a query.
+        /// </summary>
+        /// <typeparam name="T">The type to query.</typeparam>
+        /// <param name="expression">The expression.</param>
+        /// <returns></returns>
         public IEnumerable<T> Query<T>(Expression<Func<T, bool>> expression) where T : class, new()
         {
             DaoExpressionFilter expressionFilter = new DaoExpressionFilter(Logger);
@@ -604,6 +707,12 @@ namespace Bam.Net.Data.Repositories
 
 		#region IDaoRepository Members
         
+        /// <summary>
+        /// Execute the specified query.
+        /// </summary>
+        /// <typeparam name="T">The type to query.</typeparam>
+        /// <param name="query">The query.</param>
+        /// <returns></returns>
 		public override IEnumerable<T> Query<T>(IQueryFilter query)
 		{
 			Type pocoType = typeof(T);
@@ -611,11 +720,24 @@ namespace Bam.Net.Data.Repositories
             return daoResults.CopyAs<T>();
         }
 
+        /// <summary>
+        /// Execute the specified query.
+        /// </summary>
+        /// <param name="pocoType">The type to query.</param>
+        /// <param name="query">The query.</param>
+        /// <returns></returns>
         public override IEnumerable<object> Query(Type pocoType, IQueryFilter query)
         {
             return Query(pocoType, query, WrapByDefault);
         }
 
+        /// <summary>
+        /// Execute the specified query.
+        /// </summary>
+        /// <param name="pocoType">The type to query.</param>
+        /// <param name="query">The query.</param>
+        /// <param name="wrap">A value that indicates whether to wrap the results.</param>
+        /// <returns></returns>
         public IEnumerable<object> Query(Type pocoType, IQueryFilter query, bool wrap)
         {
             Type daoType = GetDaoType(pocoType);
@@ -638,36 +760,91 @@ namespace Bam.Net.Data.Repositories
         }
         #endregion
 
+        /// <summary>
+        /// Get the first result for the specified query.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="query"></param>
+        /// <returns></returns>
         public T First<T>(IQueryFilter query) where T: new()
         {
             return Top<T>(1, query).FirstOrDefault();
         }
 
+        /// <summary>
+        /// Retrieve the top results for the specified query.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="count"></param>
+        /// <param name="query"></param>
+        /// <returns></returns>
         public IEnumerable<T> Top<T>(int count, IQueryFilter query) where T : new()
         {
             return Top(count, typeof(T), query).CopyAs<T>();
         }
 
+        /// <summary>
+        /// Retrieve the top results for the specified query.
+        /// </summary>
+        /// <param name="count">The number of results to return.</param>
+        /// <param name="query">The query.</param>
+        /// <param name="sortByColumn">The column to sort by.</param>
+        /// <param name="sortOrder">The order to sort by.</param>
+        /// <returns>IEnumerable</returns>
         public IEnumerable<T> Top<T>(int count, IQueryFilter query, string sortByColumn, SortOrder sortOrder) where T : new()
         {
             return Top(count, typeof(T), query, sortByColumn, sortOrder).CopyAs<T>();
         }
 
+        /// <summary>
+        /// Retrieve the top results for the specified query.
+        /// </summary>
+        /// <param name="count">The number of results to return.</param>
+        /// <param name="pocoType">The type of the poco.</param>
+        /// <param name="query">The query.</param>
+        /// <returns>IEnumerable</returns>
         public IEnumerable Top(int count, Type pocoType, IQueryFilter query)
         {
             return Top(count, pocoType, query, null, SortOrder.Ascending, WrapByDefault);
         }
 
+        /// <summary>
+        /// Retrieve the top results for the specified query.
+        /// </summary>
+        /// <param name="count">The number of results to return.</param>
+        /// <param name="pocoType">The type of the poco.</param>
+        /// <param name="query">The query.</param>
+        /// <param name="sortByColumn">The column to sort by.</param>
+        /// <returns>IEnumerable</returns>
         public IEnumerable Top(int count, Type pocoType, IQueryFilter query, string sortByColumn)
         {
             return Top(count, pocoType, query, sortByColumn, SortOrder.Ascending, WrapByDefault);
         }
 
+        /// <summary>
+        /// Retrieve the top results for the specified query.
+        /// </summary>
+        /// <param name="count">The number of results to return.</param>
+        /// <param name="pocoType">The type of the poco.</param>
+        /// <param name="query">The query.</param>
+        /// <param name="sortByColumn">The column to sort by.</param>
+        /// <param name="sortOrder">The order to sort by.</param>
+        /// <returns>IEnumerable</returns>
         public IEnumerable Top(int count, Type pocoType, IQueryFilter query, string sortByColumn, SortOrder sortOrder)
         {
             return Top(count, pocoType, query, sortByColumn, sortOrder, WrapByDefault);
         }
 
+        /// <summary>
+        /// Retrieve the top results for the specified query.
+        /// </summary>
+        /// <param name="count">The number of results to return.</param>
+        /// <param name="pocoType">The type of the poco.</param>
+        /// <param name="query">The query.</param>
+        /// <param name="sortByColumn">The column to sort by.</param>
+        /// <param name="sortOrder">The order to sort by.</param>
+        /// <param name="wrap">A value that indicates whether to wrap the return values.</param>
+        /// <returns>IEnumerable</returns>
         public IEnumerable Top(int count, Type pocoType, IQueryFilter query, string sortByColumn, SortOrder sortOrder, bool wrap)
         {
             Type daoType = GetDaoType(pocoType);
@@ -687,6 +864,12 @@ namespace Bam.Net.Data.Repositories
 
         Dictionary<Type, Type> _daoTypeLookup = new Dictionary<Type, Type>();
         object _daoTypeResolverLock = new object();
+
+        /// <summary>
+        /// Gets the dao type for the specified poco type.
+        /// </summary>
+        /// <param name="pocoType"></param>
+        /// <returns></returns>
 		public Type GetDaoType(Type pocoType)
 		{
             if (_daoTypeLookup.ContainsKey(pocoType))
@@ -758,7 +941,7 @@ namespace Bam.Net.Data.Repositories
 
         /// <summary>
         /// Gets the base poco type by analyzing the naming convention
-        /// of the specified wrapperType
+        /// of the specified wrapperType.
         /// </summary>
         /// <param name="wrapperType"></param>
         /// <returns></returns>
@@ -770,24 +953,37 @@ namespace Bam.Net.Data.Repositories
 			return result;
 		}
 
-        public IEnumerable<object> Wrap(Type baseType, IEnumerable daoInstances)
+        /// <summary>
+        /// Create a wrapper copy of the specified dao collection.
+        /// </summary>
+        /// <param name="baseType"></param>
+        /// <param name="daoCollection"></param>
+        /// <returns></returns>
+        public IEnumerable<object> Wrap(Type baseType, IEnumerable daoCollection)
         {
-            foreach (object value in daoInstances)
+            foreach (object value in daoCollection)
             {
-                yield return GetWrapperInstance(baseType, (Dao)value);
-            }
-        }
-        public IEnumerable<T> Wrap<T>(IEnumerable daoInstances) where T : new()
-        {
-            foreach (object value in daoInstances)
-            {
-                yield return (T)GetWrapperInstance(typeof(T), (Dao)value);
+                yield return CreateWrapperCopy(baseType, (Dao)value);
             }
         }
 
         /// <summary>
-        /// Wrap the specified base instance to enable lazy loading
-        /// of List or array properties
+        /// Create a wrapper copy of the specified dao collection.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="daoCollection"></param>
+        /// <returns></returns>
+        public IEnumerable<T> Wrap<T>(IEnumerable daoCollection) where T : new()
+        {
+            foreach (object value in daoCollection)
+            {
+                yield return (T)CreateWrapperCopy(typeof(T), (Dao)value);
+            }
+        }
+
+        /// <summary>
+        /// Copy the specified base instance as a wrapper instance to enable lazy loading 
+        /// of List and array properties.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="baseInstance"></param>
@@ -798,8 +994,8 @@ namespace Bam.Net.Data.Repositories
         }
 
         /// <summary>
-        /// Wrap the specified base instance to enable lazy loading 
-        /// of List or array properties
+        /// Copy the specified base instance as a wrapper instance to enable lazy loading 
+        /// of List and array properties.
         /// </summary>
         /// <param name="baseType"></param>
         /// <param name="instance"></param>
@@ -813,6 +1009,11 @@ namespace Bam.Net.Data.Repositories
             return result;
         }
 
+        /// <summary>
+        /// Create an instance of the wrapper type of the specified base type.
+        /// </summary>
+        /// <param name="baseType"></param>
+        /// <returns></returns>
 		public object ConstructWrapper(Type baseType)
 		{
             Type wrapperType = GetWrapperType(baseType);
@@ -838,14 +1039,25 @@ namespace Bam.Net.Data.Repositories
 			return result;
 		}
 
-		public IDao GetDaoInstance(object baseInstance) // required by generated code
+        /// <summary>
+        /// Gets the dao equivalent of the specified poco.
+        /// </summary>
+        /// <param name="poco"></param>
+        /// <returns></returns>
+		public IDao GetDaoInstance(object poco) // required by generated code
 		{
-			ulong id = GetIdValue(baseInstance).Value;
-			Dao dao = GetDaoInstanceById(baseInstance.GetType(), id);
+			ulong id = GetIdValue(poco).Value;
+			Dao dao = GetDaoInstanceById(poco.GetType(), id);
 			return dao;
 		}
 
-		public bool SetChildDaoCollectionValues(object poco, IDao daoInstance)
+        /// <summary>
+        /// Set the collection values on the specified dao by copying them from the appropriate property of the specified poco.
+        /// </summary>
+        /// <param name="poco"></param>
+        /// <param name="daoInstance"></param>
+        /// <returns></returns>
+		public bool SetDaoCollectionValues(object poco, IDao daoInstance)
 		{
 			List<ITypeFk> fkDescriptors = TypeSchema.ForeignKeys.Where(tfk => tfk.PrimaryKeyType == GetBaseType(poco.GetType())).ToList();
 			bool result = false;
@@ -856,8 +1068,11 @@ namespace Bam.Net.Data.Repositories
 				IAddable daoCollection = (IAddable)childCollectionDaoProperty.GetValue(daoInstance);
 				foreach (object o in values)
 				{
+                    // TODO: define IMetaProvider and inject; extract this code
 					Meta.SetUuid(o);
                     Meta.SetCuid(o);
+                    // **
+
 					Dao dao = GetDaoType(GetBaseType(o.GetType())).Construct<Dao>();
 					dao.CopyProperties(o);
 					daoCollection.Add(dao);
@@ -868,11 +1083,46 @@ namespace Bam.Net.Data.Repositories
 			return result;
 		}
 
-		public bool SetXrefDaoCollectionValues(object poco, IDao daoInstance)
+        /// <summary>
+        /// Set the collection values on the specified poco by copying them from the appropriate property of the specified dao.
+        /// </summary>
+        /// <param name="poco"></param>
+        /// <param name="daoInstance"></param>
+        /// <returns></returns>
+        public bool SetPocoChildCollectionValues(object poco, IDao daoInstance)
+        {
+            List<ITypeFk> fkDescriptors = TypeSchema.ForeignKeys.Where(tfk => tfk.PrimaryKeyType == GetBaseType(poco.GetType())).ToList();
+            bool result = false;
+            foreach (TypeFk fkDescriptor in fkDescriptors)
+            {
+                Type arrayOrListType = fkDescriptor.CollectionProperty.PropertyType;
+                PropertyInfo childCollectionDaoProperty = GetChildCollectionDaoPropertyForTypeFk(fkDescriptor);                
+                IEnumerable daoCollection = (IEnumerable)childCollectionDaoProperty.GetValue(daoInstance);
+                if(!arrayOrListType.IsArray && arrayOrListType.IsEnumerable())
+                {
+                    SetPocoListFromDaoCollection(fkDescriptor, poco, daoCollection);
+                }
+                else
+                {
+                    SetPocoArrayFromDaoCollection(fkDescriptor, poco, daoCollection);
+                }
+
+            }
+            return result;
+        }
+
+        
+        /// <summary>
+        /// Sets the cross reference properties from the specified poco wrapper to the specified dao instance.
+        /// </summary>
+        /// <param name="pocoWrapper"></param>
+        /// <param name="daoInstance"></param>
+        /// <returns></returns>
+		public bool SetDaoXrefCollectionValues(object pocoWrapper, IDao daoInstance)
 		{
-			Type baseType = GetBaseType(poco.GetType());
+			Type baseType = GetBaseType(pocoWrapper.GetType());
 			Type daoType = GetDaoType(baseType);
-            IHasUpdatedXrefCollectionProperties xrefPropertyProvider = poco as IHasUpdatedXrefCollectionProperties;
+            IHasUpdatedXrefCollectionProperties? xrefPropertyProvider = pocoWrapper as IHasUpdatedXrefCollectionProperties;
 			bool result = false;
 			HashSet<string> handledProperties = new HashSet<string>();
 			if (xrefPropertyProvider != null)
@@ -880,10 +1130,16 @@ namespace Bam.Net.Data.Repositories
 				handledProperties = new HashSet<string>(xrefPropertyProvider.UpdatedXrefCollectionProperties.Keys.ToList());
 				xrefPropertyProvider.UpdatedXrefCollectionProperties.Keys.BackwardsEach(daoXrefPropertyName =>
 				{
-					PropertyInfo daoXrefProperty = daoType.GetProperty(daoXrefPropertyName);
-					PropertyInfo pocoProperty = xrefPropertyProvider.UpdatedXrefCollectionProperties[daoXrefPropertyName];
-                    SetXrefDaoCollectionValues(poco, daoInstance, daoXrefProperty, pocoProperty);
-					result = true;
+					PropertyInfo? daoXrefProperty = daoType.GetProperty(daoXrefPropertyName);
+                    if(daoXrefProperty != null)
+                    {
+                        PropertyInfo pocoProperty = xrefPropertyProvider.UpdatedXrefCollectionProperties[daoXrefPropertyName];
+                        bool valuesWereSet = SetDaoXrefCollectionValues(pocoWrapper, daoInstance, daoXrefProperty, pocoProperty);
+                        if (result == false && valuesWereSet)
+                        {
+                            result = true;
+                        }
+                    }
 				});
 			}
 
@@ -893,10 +1149,13 @@ namespace Bam.Net.Data.Repositories
 				string daoXrefPropertyName = "{0}".Format(leftXref.Right.Name).Pluralize();
 				if (!handledProperties.Contains(daoXrefPropertyName))
 				{
-					PropertyInfo daoXrefProperty = daoType.GetProperty(daoXrefPropertyName);
-					PropertyInfo pocoProperty = leftXref.RightCollectionProperty;
-					SetXrefDaoCollectionValues(poco, daoInstance, daoXrefProperty, pocoProperty);
-					result = true;
+					PropertyInfo? daoXrefProperty = daoType.GetProperty(daoXrefPropertyName);
+					PropertyInfo pocoXrefProperty = leftXref.RightCollectionProperty;
+					bool valuesWereSet = SetDaoXrefCollectionValues(pocoWrapper, daoInstance, daoXrefProperty, pocoXrefProperty);
+					if(result == false && valuesWereSet)
+                    {
+                        result = true;
+                    }
 				}
 			}
 
@@ -908,24 +1167,77 @@ namespace Bam.Net.Data.Repositories
 				{
 					PropertyInfo daoXrefProperty = daoType.GetProperty(daoXrefPropertyName);
 					PropertyInfo pocoProperty = rightXref.LeftCollectionProperty;
-					SetXrefDaoCollectionValues(poco, daoInstance, daoXrefProperty, pocoProperty);
-					result = true;
+					bool valuesWereSet = SetDaoXrefCollectionValues(pocoWrapper, daoInstance, daoXrefProperty, pocoProperty);
+					if(result == false && valuesWereSet)
+                    {
+                        result = true;
+                    }
 				}
 			}
 			return result;
 		}
 
-        [Obsolete("Use ForeignKeyCollectionLoader<TParentType, TChildType> instead")]
-        public IEnumerable<TChildType> ForeignKeyCollectionLoader<TChildType>(object poco) where TChildType : new() // this is used by generated code; JIT compiler can't tell
+        /// <summary>
+        /// Sets the enumerable properties on the specified poco from the specified daoInstance.
+        /// </summary>
+        /// <param name="pocoWrapper"></param>
+        /// <param name="daoInstance"></param>
+        public void SetPocoXrefCollectionValues(object pocoWrapper, IDao daoInstance)
         {
-            ITypeFk fkDescriptor = TypeSchema.ForeignKeys.FirstOrDefault(tfk => tfk.ForeignKeyType == typeof(TChildType));
-            return LoadForeignKeyCollection<TChildType>(poco, fkDescriptor);
+            Type baseType = GetBaseType(pocoWrapper.GetType());
+            Type daoType = GetDaoType(baseType);
+            IHasUpdatedXrefCollectionProperties? xrefPropertyProvider = pocoWrapper as IHasUpdatedXrefCollectionProperties;
+            HashSet<string> handledProperties = new HashSet<string>();
+            if(xrefPropertyProvider != null)
+            {
+                handledProperties = new HashSet<string>(xrefPropertyProvider.UpdatedXrefCollectionProperties.Keys.ToList());
+                xrefPropertyProvider.UpdatedXrefCollectionProperties.Keys.BackwardsEach(daoXrefPropertyName =>
+                {
+                    PropertyInfo? daoXrefProperty = daoType.GetProperty(daoXrefPropertyName);
+                    if(daoXrefProperty != null)
+                    {
+                        PropertyInfo pocoXrefProperty = xrefPropertyProvider.UpdatedXrefCollectionProperties[daoXrefPropertyName];
+                        SetPocoXrefValues(pocoWrapper, daoInstance, daoXrefProperty, pocoXrefProperty);
+                    }
+                });
+            }
+
+            ITypeXref[] leftXrefs = TypeSchema.Xrefs.Where(xref => xref.Left.Equals(baseType)).ToArray();
+
+            foreach(TypeXref leftXref in leftXrefs)
+            {
+                string daoXrefPropertyName = leftXref.Right.Name.Pluralize();
+                if (!handledProperties.Contains(daoXrefPropertyName))
+                {
+                    PropertyInfo daoXrefProperty = daoType.GetProperty(daoXrefPropertyName);
+                    PropertyInfo pocoXrefProperty = leftXref.RightCollectionProperty;
+                    if(daoXrefProperty != null && pocoXrefProperty != null)
+                    {
+                        SetPocoXrefValues(pocoWrapper, daoInstance, daoXrefProperty, pocoXrefProperty);
+                    }
+                }
+            }
+
+            ITypeXref[] rightXrefs = TypeSchema.Xrefs.Where(xref => xref.Right.Equals(baseType)).ToArray();
+
+            foreach(TypeXref rightXref in rightXrefs)
+            {
+                string daoXrefPropertyName = rightXref.Left.Name.Pluralize();
+                if (!handledProperties.Contains(daoXrefPropertyName))
+                {
+                    PropertyInfo daoXrefProperty = daoType.GetProperty(daoXrefPropertyName);
+                    PropertyInfo pocoXrefProperty = rightXref.LeftCollectionProperty;
+                    if(daoXrefProperty != null && pocoXrefProperty != null)
+                    {
+                        SetPocoXrefValues(pocoWrapper, daoInstance, daoXrefProperty, pocoXrefProperty);
+                    }
+                }
+            }
         }
 
         public IEnumerable<TChildType> ForeignKeyCollectionLoader<TParentType, TChildType>(object poco) where TChildType : new() // this is used by generated code; JIT compiler can't tell
 		{
-			// get all the child types where the foreign key property value equals the parent id
-			ITypeFk fkDescriptor = TypeSchema.ForeignKeys.FirstOrDefault(tfk => tfk.PrimaryKeyType == typeof(TParentType) && tfk.ForeignKeyType == typeof(TChildType));
+			ITypeFk? fkDescriptor = TypeSchema.ForeignKeys.FirstOrDefault(tfk => tfk.PrimaryKeyType == typeof(TParentType) && tfk.ForeignKeyType == typeof(TChildType));
 
 			if (fkDescriptor != null)
             {
@@ -934,47 +1246,20 @@ namespace Bam.Net.Data.Repositories
             return new List<TChildType>();
 		}
 
-        private IEnumerable<TChildType> LoadForeignKeyCollection<TChildType>(object poco, ITypeFk fkDescriptor) where TChildType : new()
-        {
-            List<TChildType> results = new List<TChildType>();
-            string foreignKeyName = fkDescriptor.ForeignKeyProperty.Name;
-            ulong parentId = GetIdValue(poco).Value;
-            if (parentId <= 0)
-            {
-                Type pocoType = poco.GetType();
-                Logger.AddEntry("IdValue not found for specified parent instance: Type={0}.{1}, {2}", pocoType.Namespace, pocoType.Name, poco.ToString());
-                return new List<TChildType>();
-            }
-            QueryFilter filter = Bam.Net.Data.Query.Where(foreignKeyName) == Dao.MapUlongToLong(parentId);
-            Type childDaoType = GetDaoType(typeof(TChildType));
-            MethodInfo whereMethod = childDaoType.GetMethod("Where", new Type[] { typeof(QueryFilter), typeof(Database) });
-            IEnumerable daoResults = (IEnumerable)whereMethod.Invoke(null, new object[] { filter, Database });
-
-            foreach (object dao in daoResults)
-            {
-                Type wrapperType = GetWrapperType<TChildType>();
-                TChildType value = wrapperType.Construct<TChildType>(this);
-                value.CopyProperties(dao);
-                results.Add(value);
-            }
-
-            return results;
-        }
-
         /// <summary>
-        /// Sets the properties that represent PrimaryKeys if any
+        /// Sets the properties that represent PrimaryKeys.
         /// </summary>
-        /// <param name="dtoInstance"></param>
-        public void SetParentProperties(object dtoInstance)
+        /// <param name="pocoInstance"></param>
+        public void SetParentProperties(object pocoInstance)
 		{
-			Type pocoType = GetBaseType(dtoInstance.GetType());
+			Type pocoType = GetBaseType(pocoInstance.GetType());
 			foreach (TypeFk typeFk in TypeSchema.ForeignKeys.Where(fk => fk.ForeignKeyType == pocoType))
 			{
 				PropertyInfo parentInstanceProperty = pocoType.GetProperty(typeFk.PrimaryKeyType.Name);
 				if (parentInstanceProperty != null && !parentInstanceProperty.GetGetMethod().IsVirtual)
 				{
-					object value = GetParentPropertyOfChild(dtoInstance, typeFk.PrimaryKeyType);
-					parentInstanceProperty.SetValue(dtoInstance, value);
+					object value = GetParentPropertyOfChild(pocoInstance, typeFk.PrimaryKeyType);
+					parentInstanceProperty.SetValue(pocoInstance, value);
 				}
 			}
 		}
@@ -983,19 +1268,19 @@ namespace Bam.Net.Data.Repositories
 		/// Get the instance of the parentType specified for the 
 		/// specified dto instance
 		/// </summary>
-		/// <param name="dtoChild"></param>
+		/// <param name="pocoChild"></param>
 		/// <param name="parentType"></param>
 		/// <returns></returns>
-		public object GetParentPropertyOfChild(object dtoChild, Type parentType)
+		public object? GetParentPropertyOfChild(object pocoChild, Type parentType)
 		{
-			Type dtoType = GetWrapperType(dtoChild.GetType());
+			Type dtoType = GetWrapperType(pocoChild.GetType());
 			if (dtoType != null)
 			{
 				string primaryIdPropertyName = "{0}Id".Format(parentType.Name);
 				PropertyInfo primaryIdProperty = dtoType.GetProperty(primaryIdPropertyName);
 				if (primaryIdProperty != null)
 				{
-					ulong idValue = (ulong)primaryIdProperty.GetValue(dtoChild);
+					ulong idValue = (ulong)primaryIdProperty.GetValue(pocoChild);
 					object parentDaoInstance = GetDaoInstanceById(parentType, idValue);
 					if (parentDaoInstance != null)
 					{
@@ -1018,7 +1303,7 @@ namespace Bam.Net.Data.Repositories
         }
 
 		/// <summary>
-		/// Get the PropertyInfo that represents the parent object instance for the specified
+		/// Get the PropertyInfo that represents the parent object for the specified
 		/// TypeFk
 		/// </summary>
 		/// <param name="typeFk"></param>
@@ -1057,66 +1342,28 @@ namespace Bam.Net.Data.Repositories
             return GetDaoInstanceByMethod("GetById", baseOrWrapperType, (object)id);
         }
 
-		private Dao GetDaoInstanceById<T>(ulong id) where T : new()
-		{
-			return GetDaoInstanceById(typeof(T), id);
-		}
-
-		private Dao GetDaoInstanceByUniversalIdentifier(Type baseOrWrapperType, string uuid)
-		{
-			return GetDaoInstanceByMethod("GetByUuid", baseOrWrapperType, (object)uuid);
-		}
-
-		private Dao GetDaoInstanceByMethod(string methodName, Type baseOrWrapperType, object parameter)
-		{
-			Type pocoType = GetBaseType(baseOrWrapperType);
-			Type daoType = GetDaoType(pocoType);
-			MethodInfo getterMethod = daoType.GetMethod(methodName, new Type[] { parameter.GetType(), typeof(Database) });
-			object daoResult = getterMethod.Invoke(null, new object[] { parameter, Database });
-			if (daoResult == null)
-			{
-				return null;
-			}
-			return (Dao)daoResult;
-		}
-
-		private void SaveDaoInstance<T>(object daoInstance) where T : new()
-		{
-			SaveDaoInstance(typeof(T), daoInstance);
-		}
-
 		protected void SaveDaoInstance(Type dtoOrPocoType, object daoInstance)
 		{
-			MethodInfo saveMethod = GetDaoType(dtoOrPocoType).GetMethod("Save", new Type[] { typeof(Database) });
-            try
+			MethodInfo? saveMethod = GetDaoType(dtoOrPocoType).GetMethod("Save", new Type[] { typeof(Database) });
+            if(saveMethod != null)
             {
-                saveMethod.Invoke(daoInstance, new object[] { Database });
+                try
+                {
+                    saveMethod.Invoke(daoInstance, new object[] { Database });
+                }
+                catch (Exception ex)
+                {
+                    LogAndThrow(ex, Logger);
+                }
             }
-            catch (Exception ex)
+            else
             {
-                LogAndThrow(ex, Logger);
+                Logger.Info("'Save' method was not found on type ({0})", dtoOrPocoType?.FullName);
             }
 		}
 
-		private void SetXrefDaoCollectionValues(object pocoOrPocoParent, IDao daoInstance, PropertyInfo daoXrefProperty, PropertyInfo pocoProperty)
-		{
-			IEnumerable values = (IEnumerable)pocoProperty.GetValue(pocoOrPocoParent);
-			if (values != null)
-			{
-				IAddable xrefDaoCollection = (IAddable)daoXrefProperty.GetValue(daoInstance);
-                xrefDaoCollection.Clear(daoInstance.Database);
-				foreach (object o in values)
-				{
-					Meta.SetUuid(o);
-                    Meta.SetCuid(o);
-					Dao dao = GetDaoType(o.GetType()).Construct<Dao>();
-					dao.CopyProperties(o);
-					xrefDaoCollection.Add(dao);
-				}
-			}
-		}
 
-		protected object SetDaoInstancePropertiesAndSave(object poco, Dao daoInstance)
+        protected object SaveDaoInstanceProperties(object poco, Dao daoInstance)
 		{
 			Meta.SetUuid(poco);
             Meta.SetCuid(poco);
@@ -1125,11 +1372,12 @@ namespace Bam.Net.Data.Repositories
 			Type pocoType = GetBaseType(poco.GetType());
 			SaveDaoInstance(pocoType, daoInstance);
             bool saveAgain = false;
-			if (SetChildDaoCollectionValues(poco, daoInstance))
+            object wrapper = this.Wrap(pocoType, poco);
+			if (SetDaoCollectionValues(wrapper, daoInstance))
 			{
                 saveAgain = true;
 			}
-            if(SetXrefDaoCollectionValues(poco, daoInstance))
+            if(SetDaoXrefCollectionValues(wrapper, daoInstance))
             {
                 saveAgain = true;
             }
@@ -1138,22 +1386,171 @@ namespace Bam.Net.Data.Repositories
                 daoInstance.ForceUpdate = true;
                 SaveDaoInstance(pocoType, daoInstance);
             }
-			object wrapper = ConstructWrapper(pocoType);
-			wrapper.CopyProperties(daoInstance);
-			return wrapper;  
+			
+            return SetPocoInstanceProperties(wrapper, daoInstance);
 		}
 		
-        private static QueryFilter CreateQueryFilter(Dictionary<string, object> queryParameters)
+        protected object SetPocoInstanceProperties(object poco, Dao daoInstance)
         {
-            Args.ThrowIf<ArgumentException>(queryParameters.Count == 0, "No query parameters specified");
+            Type pocoType = GetBaseType(poco.GetType());
+            object wrapper = ConstructWrapper(pocoType);
+            wrapper.CopyProperties(daoInstance);
 
-            string first = queryParameters.Keys.First();
-            QueryFilter filter = new QueryFilter(first) == Filter.Value(queryParameters[first]);
-            if (queryParameters.Keys.Count > 1)
+            SetPocoChildCollectionValues(wrapper, daoInstance);
+            SetPocoXrefCollectionValues(wrapper, daoInstance);
+            
+            return wrapper;
+        }
+
+        private IEnumerable<TChildType> LoadForeignKeyCollection<TChildType>(object poco, ITypeFk fkDescriptor) where TChildType : new()
+        {
+            List<TChildType> results = new List<TChildType>();
+            string foreignKeyName = fkDescriptor.ForeignKeyProperty.Name;
+            ulong parentId = GetIdValue(poco).Value;
+            if (parentId <= 0)
             {
-                queryParameters.Keys.Rest(1, property =>
+                Type pocoType = poco.GetType();
+                Logger.AddEntry("IdValue not found for specified parent instance: Type={0}.{1}, {2}", pocoType.Namespace, pocoType.Name, poco.ToString());
+                return results;
+            }
+            // TODO: review why the call to Dao.MapUlongToLong is necessary 
+            // potentially extract this into a separate ForeignKeyCollectionLoader implementation
+            QueryFilter filter = Bam.Net.Data.Query.Where(foreignKeyName) == Dao.MapUlongToLong(parentId);
+            Type childDaoType = GetDaoType(typeof(TChildType));
+            MethodInfo whereMethod = childDaoType.GetMethod("Where", new Type[] { typeof(QueryFilter), typeof(IDatabase) });
+            IEnumerable daoResults = (IEnumerable)whereMethod.Invoke(null, new object[] { filter, Database });
+
+            foreach (object dao in daoResults)
+            {
+                Type wrapperType = GetWrapperType<TChildType>();
+                TChildType value = wrapperType.Construct<TChildType>(this);
+                value.CopyProperties(dao);
+                results.Add(value);
+            }
+
+            return results;
+        }
+
+        private Dao GetDaoInstanceByUniversalIdentifier(Type baseOrWrapperType, string uuid)
+        {
+            return GetDaoInstanceByMethod("GetByUuid", baseOrWrapperType, (object)uuid);
+        }
+
+        private Dao GetDaoInstanceByMethod(string methodName, Type baseOrWrapperType, object parameter)
+        {
+            Type pocoType = GetBaseType(baseOrWrapperType);
+            Type daoType = GetDaoType(pocoType);
+            MethodInfo getterMethod = daoType.GetMethod(methodName, new Type[] { parameter.GetType(), typeof(Database) });
+            object daoResult = getterMethod.Invoke(null, new object[] { parameter, Database });
+            if (daoResult == null)
+            {
+                return null;
+            }
+            return (Dao)daoResult;
+        }
+
+        private bool SetDaoXrefCollectionValues(object poco, IDao daoInstance, PropertyInfo daoXrefProperty, PropertyInfo pocoXrefProperty)
+        {
+            bool result = false;
+            IEnumerable values = (IEnumerable)pocoXrefProperty.GetValue(poco);
+            if (values != null)
+            {
+                IAddable daoXrefCollection = (IAddable)daoXrefProperty.GetValue(daoInstance);
+                daoXrefCollection.Clear(daoInstance.Database);
+                foreach (object o in values)
                 {
-	                object propertyValue = queryParameters[property];
+                    Meta.SetUuid(o);
+                    Meta.SetCuid(o);
+                    Dao dao = GetDaoType(o.GetType()).Construct<Dao>();
+                    dao.CopyProperties(o);
+                    daoXrefCollection.Add(dao);
+                    result = true;
+                }
+            }
+            return result;
+        }
+
+        private void SetPocoXrefValues(object poco, IDao daoInstance, PropertyInfo daoXrefProperty, PropertyInfo pocoXrefProperty)
+        {
+            IEnumerable? daos = (IEnumerable?)daoXrefProperty.GetValue(daoInstance);
+            if (daos != null)
+            {
+                if (!pocoXrefProperty.PropertyType.IsArray && pocoXrefProperty.PropertyType.IsEnumerable())
+                {
+                    SetPocoXrefListValues(poco, daos, pocoXrefProperty);
+                }
+                else
+                {
+                    SetPocoXrefArrayValues(poco, daos, pocoXrefProperty);
+                }
+            }
+        }
+
+        private void SetPocoXrefArrayValues(object poco, IEnumerable daos, PropertyInfo pocoXrefProperty)
+        {
+            Array? arr = pocoXrefProperty.GetValue(poco) as Array;
+            Type? itemType = pocoXrefProperty.GetEnumerableType();
+            if (arr != null && itemType != null)
+            {
+                int index = 0;
+                foreach (object dao in daos)
+                {
+                    object item = itemType.Construct();
+                    item.CopyProperties(dao);
+                    arr.SetValue(item, index++);
+                }
+            }
+        }
+
+        private void SetPocoXrefListValues(object poco, IEnumerable daos, PropertyInfo pocoXrefProperty)
+        {
+            IList list = (IList)pocoXrefProperty.PropertyType.Construct();
+            Type? itemType = pocoXrefProperty.GetEnumerableType();
+            foreach (object dao in daos)
+            {
+                object item = itemType.Construct();
+                item.CopyProperties(dao);
+                list.Add(item);
+            }
+            pocoXrefProperty.SetValue(poco, list);
+        }
+
+        private void SetPocoArrayFromDaoCollection(TypeFk fkDescriptor, object poco, IEnumerable daoCollection)
+        {
+            Array arr = (Array)fkDescriptor.CollectionProperty.PropertyType.Construct();
+            int index = 0;
+            foreach (object dao in daoCollection)
+            {
+                object child = fkDescriptor.ForeignKeyType.Construct();
+                child.CopyProperties(dao);
+                arr.SetValue(child, index++);
+            }
+            fkDescriptor.CollectionProperty.SetValue(poco, arr);
+        }
+
+        private void SetPocoListFromDaoCollection(TypeFk fkDescriptor, object poco, IEnumerable daoCollection)
+        {
+            IList list = (IList)fkDescriptor.CollectionProperty.PropertyType.Construct();
+            foreach (object dao in daoCollection)
+            {
+                object child = fkDescriptor.ForeignKeyType.Construct();
+                child.CopyProperties(dao);
+                list.Add(child);
+            }
+            fkDescriptor.CollectionProperty.SetValue(poco, list);
+        }
+
+        private static QueryFilter CreateQueryFilter(Dictionary<string, object> queryArguments)
+        {
+            Args.ThrowIf<ArgumentException>(queryArguments.Count == 0, "No query parameters specified");
+
+            string first = queryArguments.Keys.First();
+            QueryFilter filter = new QueryFilter(first) == Filter.Value(queryArguments[first]); // This uses operator overrides defined on QueryFilter to create the filter.  See QueryFilter.cs.
+            if (queryArguments.Keys.Count > 1)
+            {
+                queryArguments.Keys.Rest(1, property =>
+                {
+	                object propertyValue = queryArguments[property];
 	                if (propertyValue is ulong ulongPropertyValue)
 	                {
 		                propertyValue = Dao.MapUlongToLong(ulongPropertyValue);
@@ -1164,12 +1561,12 @@ namespace Bam.Net.Data.Repositories
             return filter;
         }
 
-        private object GetWrapperInstance(Type objectType, Dao daoInstance)
+        private object CreateWrapperCopy(Type objectType, Dao daoInstance)
         {
-            object result = ConstructWrapper(objectType);
-            result.CopyProperties(daoInstance);
-            SetParentProperties(result);
-            return result;
+            object pocoWrapper = ConstructWrapper(objectType);
+            pocoWrapper.CopyProperties(daoInstance);
+            SetParentProperties(pocoWrapper);
+            return SetPocoInstanceProperties(pocoWrapper, daoInstance);
         }
 
         private void WarnRetrieveAll<T>() where T : class, new()
@@ -1205,24 +1602,5 @@ namespace Bam.Net.Data.Repositories
             }
             logger.AddEntry(signature, e, message, innerMessage);
         }
-
-/*        private void CtorInit(ITypeTableNameProvider tableNameProvider = null, Func<IDaoSchemaDefinition, ITypeSchema, string> schemaTempPathProvider = null)
-        {
-            SchemaGenerator = new SchemaGenerator(tableNameProvider, schemaTempPathProvider);
-            TypeToDaoGenerator = new TypeToDaoGenerator(SchemaGenerator);
-            
-            TypeToDaoGenerator.SchemaWarning += (o, a) => FireEvent(SchemaWarning, a);
-            
-            TypeToDaoGenerator.GenerateDaoAssemblySucceeded += (o, a) =>
-            {
-                GenerateDaoAssemblyEventArgs args = (GenerateDaoAssemblyEventArgs)a;
-                FireEvent(GenerateDaoAssemblySucceeded, args);
-            };
-
-            NullifyDaoAssemblyOnAddType = true;
-            WrapByDefault = true;
-            WarningsAsErrors = true;
-            Logger = Log.Default;
-        }*/
     }
 }

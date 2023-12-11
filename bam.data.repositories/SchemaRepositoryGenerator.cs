@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Bam.Data;
+using Bam.Data.Schema;
 using Bam.Net.Logging;
 
 namespace Bam.Net.Data.Repositories
@@ -19,7 +20,7 @@ namespace Bam.Net.Data.Repositories
         public SchemaRepositoryGenerator(ISchemaRepositoryGeneratorSettings settings, ILogger? logger = null)
             :base(
                  new SchemaProvider(), 
-                 new Schema.DaoGenerator(settings.DaoCodeWriter, settings.DaoTargetStreamResolver), 
+                 new Schema.DaoGenerator(settings.DaoCodeWriter), 
                  settings.WrapperGenerator
             )
         {
@@ -28,7 +29,7 @@ namespace Bam.Net.Data.Repositories
                 Subscribe(logger);
             }
 
-            DaoGenerator = new Schema.DaoGenerator(settings.DaoCodeWriter, settings.DaoTargetStreamResolver);
+            DaoGenerator = new Schema.DaoGenerator(settings.DaoCodeWriter);
             WrapperGenerator = settings.WrapperGenerator;
             Configure(settings.Config);
         }
@@ -51,7 +52,7 @@ namespace Bam.Net.Data.Repositories
             Config = config;
             CheckIdField = config.CheckForIds;
             BaseRepositoryType = config.UseInheritanceSchema ? "DaoInheritanceRepository" : "DaoRepository";
-            BaseNamespace = Config.FromNameSpace;
+            BaseNamespace = Config.FromNamespace;
             
         }
 
@@ -65,7 +66,7 @@ namespace Bam.Net.Data.Repositories
             EnsureConfigOrDie();
             SourceAssembly = Assembly.LoadFile(Config.TypeAssembly);
             Args.ThrowIfNull(SourceAssembly, $"Assembly not found {Config.TypeAssembly}", "SourceAssembly");
-            AddTypes(SourceAssembly, Config.FromNameSpace);
+            AddTypes(SourceAssembly, Config.FromNamespace);
         }
 
         public void AddTypes(Assembly typeAssembly, string baseNamespace)

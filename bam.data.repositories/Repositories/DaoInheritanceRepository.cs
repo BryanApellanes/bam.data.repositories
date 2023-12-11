@@ -231,7 +231,7 @@ namespace Bam.Net.Data.Repositories
         private void SaveXrefs(object instance, Type pocoType)
         {
             Dao dao = GetDaoInstanceById(pocoType, GetIdValue(instance).Value);
-            if (SetXrefDaoCollectionValues(instance, dao))
+            if (SetDaoXrefCollectionValues(instance, dao))
             {
                 dao.ForceUpdate = true;
                 SaveDaoInstance(pocoType, dao);

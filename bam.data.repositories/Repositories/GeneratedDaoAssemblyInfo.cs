@@ -26,10 +26,6 @@ namespace Bam.Net.Data.Repositories
         {
         }
 
-        public GeneratedDaoAssemblyInfo(string infoFileName, CompilerResults results)
-            : base(infoFileName, results)
-        { }
-
         [Exclude]
         [JsonIgnore]
         public ITypeSchema TypeSchema { get; set; }
