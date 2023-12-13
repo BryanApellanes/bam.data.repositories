@@ -13,6 +13,18 @@ namespace Bam.Net.Data.Repositories
 {
     public partial class DatabaseFactory
     {
+        Dictionary<SqlDialect, Func<string, Database>> _databaseConstructors;
+
+        static DatabaseFactory _factory;
+        static object _factoryLock = new object();
+        public static DatabaseFactory Instance
+        {
+            get
+            {
+                return _factoryLock.DoubleCheckLock(ref _factory, () => new DatabaseFactory());
+            }
+        }
+
         public DatabaseFactory()
         {
             _databaseConstructors = new Dictionary<SqlDialect, Func<string, Database>>();
@@ -29,6 +41,13 @@ namespace Bam.Net.Data.Repositories
             _databaseConstructors.Add(SqlDialect.Oracle, oracle);
             _databaseConstructors.Add(SqlDialect.Postgres, postgres);
             _databaseConstructors.Add(SqlDialect.Npgsql, postgres);
+        }
+
+        public Database GetDatabase(SqlDialect dialect, string connectionString)
+        {
+            Func<string, Database> ctor = _databaseConstructors[dialect];
+            Args.ThrowIf(ctor == null, "Unsupported dialect specified: {0}", dialect.ToString());
+            return ctor(connectionString);
         }
     }
 }

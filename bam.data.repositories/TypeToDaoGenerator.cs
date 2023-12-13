@@ -255,8 +255,8 @@ namespace Bam.Net.Data.Repositories
             GeneratedDaoAssemblyInfo info = GeneratedAssemblies.GetGeneratedAssemblyInfo(SchemaName) as GeneratedDaoAssemblyInfo;
             if (info == null)
             {
-                TypeSchema typeSchema = SchemaDefinitionCreateResult.TypeSchema;
-                IDaoSchemaDefinition schemaDef = SchemaDefinitionCreateResult.SchemaDefinition;
+                TypeSchema typeSchema = DaoSchemaDefinitionCreateResult.TypeSchema;
+                IDaoSchemaDefinition schemaDef = DaoSchemaDefinitionCreateResult.DaoSchemaDefinition;
                 string schemaName = schemaDef.Name;
                 string schemaHash = typeSchema.Hash;
                 info = new GeneratedDaoAssemblyInfo(schemaName, typeSchema, schemaDef);
@@ -288,7 +288,7 @@ namespace Bam.Net.Data.Repositories
 
         DaoSchemaDefinitionCreateResult _schemaDefinitionCreateResult;
         object _schemaDefinitionCreateResultLock = new object();
-        public DaoSchemaDefinitionCreateResult SchemaDefinitionCreateResult
+        public DaoSchemaDefinitionCreateResult DaoSchemaDefinitionCreateResult
         {
             get
             {
@@ -322,9 +322,9 @@ namespace Bam.Net.Data.Repositories
         /// <summary>
         /// Warnings related to the type definitions, see TypeSchemaWarnings enum for possible warnings.
         /// </summary>
-        public HashSet<ITypeSchemaWarning> TypeSchemaWarnings => SchemaDefinitionCreateResult.TypeSchemaWarnings;
-        public bool MissingColumns => SchemaDefinitionCreateResult.MissingColumns;
-        public SchemaWarnings Warnings => SchemaDefinitionCreateResult.Warnings;
+        public HashSet<ITypeSchemaWarning> TypeSchemaWarnings => DaoSchemaDefinitionCreateResult.TypeSchemaWarnings;
+        public bool MissingColumns => DaoSchemaDefinitionCreateResult.MissingColumns;
+        public SchemaWarnings Warnings => DaoSchemaDefinitionCreateResult.Warnings;
 
         public bool WarningsAsErrors
         {
@@ -416,7 +416,7 @@ namespace Bam.Net.Data.Repositories
             try
             {
                 compilationEx = null;
-                IDaoSchemaDefinition schema = SchemaDefinitionCreateResult.SchemaDefinition;
+                IDaoSchemaDefinition schema = DaoSchemaDefinitionCreateResult.DaoSchemaDefinition;
                 string assemblyName = $"{schema.Name}.dll";
 
                 string writeSourceTo = TypeSchemaTempPathProvider(schema, typeSchema);
@@ -482,8 +482,8 @@ namespace Bam.Net.Data.Repositories
         {
             EmitWarnings();
             ThrowWarningsIfWarningsAsErrors();
-            GenerateDaos(SchemaDefinitionCreateResult.SchemaDefinition, writeSourceTo);
-            GenerateWrappers(SchemaDefinitionCreateResult.TypeSchema, writeSourceTo);
+            GenerateDaos(DaoSchemaDefinitionCreateResult.DaoSchemaDefinition, writeSourceTo);
+            GenerateWrappers(DaoSchemaDefinitionCreateResult.TypeSchema, writeSourceTo);
         }
 
         protected internal void GenerateDaos(IDaoSchemaDefinition schema, string writeSourceTo)
@@ -499,7 +499,7 @@ namespace Bam.Net.Data.Repositories
         protected internal byte[] Compile(string assemblyNameToCreate, string writeSourceTo)
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            compiler.AddMetadataReferenceResolver(new TypeSchemaMetadataReferenceResolver(SchemaDefinitionCreateResult.TypeSchema));
+            compiler.AddMetadataReferenceResolver(new TypeSchemaMetadataReferenceResolver(DaoSchemaDefinitionCreateResult.TypeSchema));
             compiler.AddMetadataReferenceResolver(new DaoGeneratorMetadataReferenceResolver());
             compiler.AddMetadataReferenceResolver(new StaticAssemblyListReferencePackMetadataReferenceResolver("System.Xml.ReaderWriter"));
             return compiler.CompileDirectories(assemblyNameToCreate, new DirectoryInfo[] { new DirectoryInfo(writeSourceTo) });
@@ -518,7 +518,7 @@ namespace Bam.Net.Data.Repositories
 
                 references.Add(assemblyInfo.FullName);
             });
-            SchemaDefinitionCreateResult.TypeSchema.Tables.Each(type =>
+            DaoSchemaDefinitionCreateResult.TypeSchema.Tables.Each(type =>
             {
                 references.Add(type.Assembly.GetFileInfo().FullName);
                 CustomAttributeTypeDescriptor attrTypes = new CustomAttributeTypeDescriptor(type);
@@ -613,7 +613,7 @@ namespace Bam.Net.Data.Repositories
         private void SetTempPathProvider()
         {
             TypeSchemaTempPathProvider = (schemaDef, typeSchema) =>
-                System.IO.Path.Combine(RuntimeSettings.ProcessDataFolder, "DaoTemp_{0}".Format(schemaDef.Name));
+                System.IO.Path.Combine(RuntimeSettings.GenDir, "DaoTemp_{0}".Format(schemaDef.Name));
         }
     }
 }

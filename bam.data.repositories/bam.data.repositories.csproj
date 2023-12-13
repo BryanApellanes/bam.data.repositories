@@ -7,32 +7,27 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Repositories\DaoBackup.cs" />
-    <Compile Remove="Repositories\Dto.cs" />
+    <None Remove="Templates\ChildPrimaryKeyProperty.tmpl" />
+    <None Remove="Templates\Dto.tmpl" />
+    <None Remove="Templates\ForeignKeyProperty.tmpl" />
+    <None Remove="Templates\SchemaRepository.tmpl" />
+    <None Remove="Templates\SchemaRepositoryAddType.tmpl" />
+    <None Remove="Templates\SchemaRepositoryMethods.tmpl" />
+    <None Remove="Templates\Wrapper.tmpl" />
+    <None Remove="Templates\XrefLeftProperty.tmpl" />
+    <None Remove="Templates\XrefRightProperty.tmpl" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Repositories\Templates\ChildPrimaryKeyProperty.tmpl" />
-    <None Remove="Repositories\Templates\Dto.tmpl" />
-    <None Remove="Repositories\Templates\ForeignKeyProperty.tmpl" />
-    <None Remove="Repositories\Templates\SchemaRepository.tmpl" />
-    <None Remove="Repositories\Templates\SchemaRepositoryAddType.tmpl" />
-    <None Remove="Repositories\Templates\SchemaRepositoryMethods.tmpl" />
-    <None Remove="Repositories\Templates\Wrapper.tmpl" />
-    <None Remove="Repositories\Templates\XrefLeftProperty.tmpl" />
-    <None Remove="Repositories\Templates\XrefRightProperty.tmpl" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Repositories\Templates\ChildPrimaryKeyProperty.tmpl" />
-    <EmbeddedResource Include="Repositories\Templates\Dto.tmpl" />
-    <EmbeddedResource Include="Repositories\Templates\ForeignKeyProperty.tmpl" />
-    <EmbeddedResource Include="Repositories\Templates\SchemaRepository.tmpl" />
-    <EmbeddedResource Include="Repositories\Templates\SchemaRepositoryAddType.tmpl" />
-    <EmbeddedResource Include="Repositories\Templates\SchemaRepositoryMethods.tmpl" />
-    <EmbeddedResource Include="Repositories\Templates\Wrapper.tmpl" />
-    <EmbeddedResource Include="Repositories\Templates\XrefLeftProperty.tmpl" />
-    <EmbeddedResource Include="Repositories\Templates\XrefRightProperty.tmpl" />
+    <EmbeddedResource Include="Templates\ChildPrimaryKeyProperty.tmpl" />
+    <EmbeddedResource Include="Templates\Dto.tmpl" />
+    <EmbeddedResource Include="Templates\ForeignKeyProperty.tmpl" />
+    <EmbeddedResource Include="Templates\SchemaRepository.tmpl" />
+    <EmbeddedResource Include="Templates\SchemaRepositoryAddType.tmpl" />
+    <EmbeddedResource Include="Templates\SchemaRepositoryMethods.tmpl" />
+    <EmbeddedResource Include="Templates\Wrapper.tmpl" />
+    <EmbeddedResource Include="Templates\XrefLeftProperty.tmpl" />
+    <EmbeddedResource Include="Templates\XrefRightProperty.tmpl" />
   </ItemGroup>
 
   <ItemGroup>

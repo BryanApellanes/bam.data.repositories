@@ -31,10 +31,10 @@ namespace Bam.Net.Data.Repositories
 
             DaoGenerator = new Schema.DaoGenerator(settings.DaoCodeWriter);
             WrapperGenerator = settings.WrapperGenerator;
-            Configure(settings.Config);
+            Configure(settings.DaoRepoGenerationConfig);
         }
 
-        public ITemplateRenderer TemplateRenderer { get; set; }
+        public ITemplateRenderer TemplateRenderer { get; protected set; }
 
         public IDaoRepoGenerationConfig Config
         {
@@ -87,18 +87,30 @@ namespace Bam.Net.Data.Repositories
         public string BaseRepositoryType { get; set; }
         public string SchemaRepositoryNamespace => $"{DaoNamespace}.Repository";
 
+        /// <summary>
+        /// Generate all supporting source files for the schema specific DaoRepository including the repository itself.
+        /// </summary>
         public void GenerateSource()
         {
             EnsureConfigOrDie();
             GenerateSource(Config.WriteSourceTo);
         }
 
+        /// <summary>
+        /// Generate all supporting source files for the schema specific DaoRepository including the repository itself.
+        /// </summary>
+        /// <param name="writeSourceTo"></param>
         public override void GenerateSource(string writeSourceTo)
         {
             base.GenerateSource(writeSourceTo);
             GenerateRepositorySource(writeSourceTo);
         }
 
+        /// <summary>
+        /// Generate source code for the schema specific DaoRepository.
+        /// </summary>
+        /// <param name="writeSourceTo"></param>
+        /// <param name="schemaName"></param>
         public virtual void GenerateRepositorySource(string writeSourceTo, string schemaName = null)
         {
             Args.ThrowIfNull(TemplateRenderer, "TemplateRenderer");

@@ -167,7 +167,7 @@ namespace Bam.Net.Data.Repositories
 		{
 			get
 			{
-				return TypeToDaoGenerator.SchemaDefinitionCreateResult.SchemaDefinition;
+				return TypeToDaoGenerator.DaoSchemaDefinitionCreateResult.DaoSchemaDefinition;
 			}
 		}
 

@@ -16,18 +16,7 @@ namespace Bam.Net.Data.Repositories
         public IDaoCodeWriter DaoCodeWriter { get; set; }
         public IDaoTargetStreamResolver DaoTargetStreamResolver { get; set; }
         public IWrapperGenerator WrapperGenerator { get; set; }
-        public IDaoRepoGenerationConfig Config { get; set; }
+        public IDaoRepoGenerationConfig DaoRepoGenerationConfig { get; set; }
 
-        public static ISchemaRepositoryGeneratorSettingsProvider SchemaRepositoryGeneratorSettingsProvider
-        {
-            get;
-            set;
-        }
-
-        public static ISchemaRepositoryGeneratorSettings FromConfig(IDaoRepoGenerationConfig config)
-        {
-            Args.ThrowIfNull(SchemaRepositoryGeneratorSettingsProvider, $"{nameof(SchemaRepositoryGeneratorSettings)}.{nameof(SchemaRepositoryGeneratorSettingsProvider)}");
-            return SchemaRepositoryGeneratorSettingsProvider.GetSettings(config);
-        }
     }
 }
