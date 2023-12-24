@@ -51,9 +51,8 @@ namespace Bam.Net.Data.Repositories
             }
             Config = config;
             CheckIdField = config.CheckForIds;
-            BaseRepositoryType = config.UseInheritanceSchema ? "DaoInheritanceRepository" : "DaoRepository";
-            BaseNamespace = Config.FromNamespace;
-            
+            BaseRepositoryType = config.UseInheritanceSchema ? nameof(DaoInheritanceRepository) : nameof(DaoRepository);
+            BaseNamespace = Config.FromNamespace;            
         }
 
         public virtual SchemaTypeModel GetSchemaTypeModel(Type t)
@@ -78,8 +77,7 @@ namespace Bam.Net.Data.Repositories
 
         public void GenerateRepositorySource()
         {
-            AddTypes();
-            Args.ThrowIf(Types.Length == 0, "No types were added");
+            EnsureConfigOrDie();
             Args.ThrowIfNullOrEmpty(Config.WriteSourceTo, "WriteSourceTo");
             GenerateRepositorySource(Config.WriteSourceTo, Config.SchemaName);
         }
@@ -92,8 +90,7 @@ namespace Bam.Net.Data.Repositories
         /// </summary>
         public void GenerateSource()
         {
-            EnsureConfigOrDie();
-            GenerateSource(Config.WriteSourceTo);
+            GenerateRepositorySource();
         }
 
         /// <summary>
@@ -102,7 +99,6 @@ namespace Bam.Net.Data.Repositories
         /// <param name="writeSourceTo"></param>
         public override void GenerateSource(string writeSourceTo)
         {
-            base.GenerateSource(writeSourceTo);
             GenerateRepositorySource(writeSourceTo);
         }
 
@@ -113,6 +109,8 @@ namespace Bam.Net.Data.Repositories
         /// <param name="schemaName"></param>
         public virtual void GenerateRepositorySource(string writeSourceTo, string schemaName = null)
         {
+            AddTypes();
+            Args.ThrowIf(Types.Length == 0, "No types were added");
             Args.ThrowIfNull(TemplateRenderer, "TemplateRenderer");
 
             schemaName = schemaName ?? SchemaName;

@@ -35,8 +35,8 @@ namespace Bam.Net.Data.Repositories
         Type _defaultType;
         /// <summary>
         /// If a non typed query is executed the DefaultType
-        /// can be used by specific Repository implementations
-        /// to advise which Type to query and return
+        /// is used by some Repository implementations
+        /// to advise which Type to query and return.
         /// </summary>
         public Type DefaultType
         {
@@ -53,6 +53,7 @@ namespace Bam.Net.Data.Repositories
                 _defaultType = value;
             }
         }
+
         HashSet<Type> _storableTypes;
 
 		public IEnumerable<Type> StorableTypes

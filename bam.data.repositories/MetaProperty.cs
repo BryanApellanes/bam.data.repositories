@@ -17,7 +17,7 @@ namespace Bam.Net.Data.Repositories
 		{
 		}
 
-		public T TypedValue
+		public T? TypedValue
 		{
 			get
 			{
@@ -25,6 +25,7 @@ namespace Bam.Net.Data.Repositories
 			}
 		}
 	}
+/*
 	public class MetaProperty
 	{
 		public MetaProperty(Meta meta, PropertyInfo property)
@@ -137,5 +138,5 @@ namespace Bam.Net.Data.Repositories
 				_versionDates = null;
 			}
 		}
-	}
+	}*/
 }
