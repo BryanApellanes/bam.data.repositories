@@ -12,8 +12,9 @@ using System.IO;
 using Bam.Net.Logging;
 using Bam.Net.Configuration;
 using System.Configuration;
+using Bam.Net;
 
-namespace Bam.Net
+namespace Bam
 {
     /// <summary>
     /// A file based
