@@ -192,14 +192,11 @@ namespace Bam.Net.Data.Repositories
         /// <summary>
         /// The assembly to look for Dao definitions in.
         /// This may or may not be generated and can be
-        /// user/developer specified
+        /// user/developer specified.
         /// </summary>
         public Assembly DaoAssembly
         {
-            get
-            {
-                return _daoAssembly;
-            }
+            get => _daoAssembly;
             set
             {
                 _daoAssembly = value;
@@ -208,10 +205,10 @@ namespace Bam.Net.Data.Repositories
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether adding a type will set the 
+        /// Gets or sets a value indicating whether adding a type sets the 
         /// DaoAssembly to null, effectively requiring that it be regenerated.  
         /// Directly setting the DaoAssembly sets this to false.  If the 
-        /// DaoAssembly has already been set and you wish for it not to be reset, 
+        /// DaoAssembly has already been set, and you wish for it not to be reset, 
         /// set this to false.  The default value is true;
         /// </summary>
         protected bool NullifyDaoAssemblyOnAddType { get; set; }
@@ -324,10 +321,9 @@ namespace Bam.Net.Data.Repositories
         /// <summary>
         /// Add the specified type as a storable type.
         /// When the underlying schema is generated for the 
-        /// specified type it will be analyzed for its 
-        /// relationships to other types as necessary
-        /// and those types will be included in the 
-        /// resulting schema
+        /// specified type, it is analyzed for its 
+        /// relationships to other types and those types are
+        /// included in the resulting schema.
         /// </summary>
         /// <param name="type"></param>
 		public override void AddType(Type type)
