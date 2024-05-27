@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bam.Net.CoreServices.ProtoBuf
+namespace Bam.CoreServices.ProtoBuf
 {
     /// <summary>
     /// An IPropertyNumberer implementation that keeps

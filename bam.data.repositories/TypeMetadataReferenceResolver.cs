@@ -1,5 +1,5 @@
 ﻿using Bam.CoreServices.AssemblyManagement;
-using Bam.Net;
+using Bam;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;

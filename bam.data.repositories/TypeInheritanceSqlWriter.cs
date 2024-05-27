@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
     /// <summary>
     /// A class used to write sql statements that can be used
@@ -14,7 +14,7 @@ namespace Bam.Net.Data.Repositories
     /// inheritance chain.  For example if a type A extends 
     /// type B then there will be tables in the database
     /// representing each.  This structure can be achieved
-    /// by using <see cref="Bam.Net.Data.Repositories.TypeSchemaScriptWriter.WriteSchemaScript(Database, IEnumerable{Type})"/>
+    /// by using <see cref="Bam.Data.Repositories.TypeSchemaScriptWriter.WriteSchemaScript(Database, IEnumerable{Type})"/>
     /// </summary>
     public class TypeInheritanceSqlWriter
     {

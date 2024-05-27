@@ -5,10 +5,10 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
-using Bam.Net.Data.Repositories;
+using Bam.Data.Repositories;
 using System.Diagnostics;
 
-namespace Bam.Net.CoreServices
+namespace Bam.CoreServices
 {
     /// <summary>
     /// A RepositoryTypesProvider implementation that reads namespaces from a file named
@@ -47,7 +47,7 @@ namespace Bam.Net.CoreServices
             }
             catch (Exception ex)
             {
-                Bam.Net.Logging.Log.Default.AddEntry("An exception occurred in {0}: {1}", ex, MethodBase.GetCurrentMethod().Name, ex.Message);
+                Bam.Logging.Log.Default.AddEntry("An exception occurred in {0}: {1}", ex, MethodBase.GetCurrentMethod().Name, ex.Message);
             }
             return result;
         }

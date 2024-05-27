@@ -11,16 +11,16 @@ using System.Runtime.CompilerServices;
 using Bam.Console;
 using Bam.Data.Repositories;
 using Bam.Data.Schema;
-using Bam.Net.Analytics;
-using Bam.Net.Configuration;
-using Bam.Net.CoreServices.AssemblyManagement;
-using Bam.Net.Data.Qi;
-using Bam.Net.Data.Schema;
-using Bam.Net.Logging;
-using Bam.Net.Services;
+using Bam.Analytics;
+using Bam.Configuration;
+using Bam.CoreServices.AssemblyManagement;
+using Bam.Data.Qi;
+using Bam.Data.Schema;
+using Bam.Logging;
+using Bam.Services;
 using Newtonsoft.Json;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
     /// <summary>
     /// A class used to generate data access objects from

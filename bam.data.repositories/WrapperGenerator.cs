@@ -11,7 +11,7 @@ using System.Reflection;
 using System.CodeDom.Compiler;
 using Bam.Data.Schema;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
 	/// <summary>
 	/// A class used to generate Poco type wrappers which 

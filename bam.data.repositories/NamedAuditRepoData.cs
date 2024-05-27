@@ -1,4 +1,4 @@
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
     public class NamedAuditRepoData : KeyedAuditRepoData
     {

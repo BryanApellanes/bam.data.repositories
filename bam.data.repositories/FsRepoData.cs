@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
     // TODO: rename this to NamedRepoData
     public class FsRepoData: AuditRepoData

@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Bam.Net.Data.MsSql;
-using Bam.Net.Data.MySql;
-using Bam.Net.Data.Npgsql;
-using Bam.Net.Data.Oracle;
-using Bam.Net.Data.SQLite;
+using Bam.Data.MsSql;
+using Bam.Data.MySql;
+using Bam.Data.Npgsql;
+using Bam.Data.Oracle;
+using Bam.Data.SQLite;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
     public partial class DatabaseFactory
     {

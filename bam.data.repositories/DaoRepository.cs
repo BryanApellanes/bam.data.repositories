@@ -9,11 +9,11 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Bam.Data.Repositories;
 using Bam.Data.Schema;
-using Bam.Net.Data.Schema;
-using Bam.Net.Data.SQLite;
-using Bam.Net.Logging;
+using Bam.Data.Schema;
+using Bam.Data.SQLite;
+using Bam.Logging;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
     /// <summary>
     /// A repository that generates an underlying Dao
@@ -524,7 +524,7 @@ namespace Bam.Net.Data.Repositories
         /// <returns>A collection of results.</returns>
 		public override IEnumerable<object> Query(string propertyName, object value)
 		{
-			return Query(DefaultType, Bam.Net.Data.Query.Where(propertyName) == value).CopyAs(DefaultType);
+			return Query(DefaultType, Bam.Data.Query.Where(propertyName) == value).CopyAs(DefaultType);
 		}
 
         /// <summary>
@@ -1411,7 +1411,7 @@ namespace Bam.Net.Data.Repositories
             }
             // TODO: review why the call to Dao.MapUlongToLong is necessary 
             // potentially extract this into a separate ForeignKeyCollectionLoader implementation
-            QueryFilter filter = Bam.Net.Data.Query.Where(foreignKeyName) == Dao.MapUlongToLong(parentId);
+            QueryFilter filter = Bam.Data.Query.Where(foreignKeyName) == Dao.MapUlongToLong(parentId);
             Type childDaoType = GetDaoType(typeof(TChildType));
             MethodInfo whereMethod = childDaoType.GetMethod("Where", new Type[] { typeof(QueryFilter), typeof(IDatabase) });
             IEnumerable daoResults = (IEnumerable)whereMethod.Invoke(null, new object[] { filter, Database });

@@ -4,14 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Bam.Net.Data.Schema;
+using Bam.Data.Schema;
 using System.Data;
-using Bam.Net.Logging;
+using Bam.Logging;
 using System.Data.Common;
 using System.Collections.Concurrent;
 using Bam.Data.Schema;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
     /// <summary>
     /// An extension to the DaoRepository that supports saving

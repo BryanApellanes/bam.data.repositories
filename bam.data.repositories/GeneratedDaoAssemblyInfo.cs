@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Bam.Net.Data.Schema;
-using Bam.Net;
+using Bam.Data.Schema;
+using Bam;
 using Newtonsoft.Json;
 using System.CodeDom.Compiler;
 using System.Reflection;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
     public class GeneratedDaoAssemblyInfo: GeneratedAssemblyInfo
     {

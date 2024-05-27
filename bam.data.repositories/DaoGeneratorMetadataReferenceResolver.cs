@@ -1,5 +1,5 @@
 ﻿using Bam.CoreServices.AssemblyManagement;
-using Bam.Net.Data.Qi;
+using Bam.Data.Qi;
 using Microsoft.CodeAnalysis;
 using Newtonsoft.Json;
 using System;
@@ -30,7 +30,7 @@ namespace Bam.Data.Repositories
                 typeof(MarshalByValueComponent).Assembly,
                 typeof(IComponent).Assembly,
                 typeof(IServiceProvider).Assembly,
-                typeof(Qi).Assembly,
+                typeof(Qi.Qi).Assembly,
                 Assembly.GetExecutingAssembly()
             }
             .Select(a => MetadataReference.CreateFromFile(a.Location))

@@ -5,10 +5,10 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Bam.Data.Schema;
-using Bam.Net.Data;
-using Bam.Net.Data.Repositories;
+using Bam.Data;
+using Bam.Data.Repositories;
 
-namespace Bam.Net.CoreServices.ProtoBuf
+namespace Bam.CoreServices.ProtoBuf
 {
     /// <summary>
     /// A ProtoFileGenerator that will only

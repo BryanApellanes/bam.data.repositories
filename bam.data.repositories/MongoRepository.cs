@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Bam.Net.Logging;
+using Bam.Logging;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
@@ -16,7 +16,7 @@ using MongoDB.Driver.GridFS;
 using MongoDB.Driver.Linq;
 using System.Collections;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
     /// <summary>
     /// An incomplete Repository implementation using Mongo as a backing 

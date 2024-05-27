@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace Bam.Net.CoreServices.ProtoBuf
+namespace Bam.CoreServices.ProtoBuf
 {
     public interface IPropertyNumberer
     {

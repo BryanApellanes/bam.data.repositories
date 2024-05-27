@@ -1,16 +1,16 @@
 /*
 	Copyright © Bryan Apellanes 2015  
 */
-using Bam.Net.CoreServices;
+using Bam.CoreServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
-    public class MetaProvider : Bam.Net.Data.Repositories.IMetaProvider
+    public class MetaProvider : Bam.Data.Repositories.IMetaProvider
 	{
 		public MetaProvider(IObjectPersister objectPersister)
 		{

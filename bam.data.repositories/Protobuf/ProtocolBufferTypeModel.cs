@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bam.Net.CoreServices.ProtoBuf
+namespace Bam.CoreServices.ProtoBuf
 {
     internal class ProtocolBufferTypeModel
     {

@@ -6,10 +6,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Bam.Net;
+using Bam;
 using System.Runtime.Serialization;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
 	[Serializable]
 	public class MissingForeignKeyPropertyException: Exception 

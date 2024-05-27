@@ -7,9 +7,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Bam.Data;
 using Bam.Data.Schema;
-using Bam.Net.Logging;
+using Bam.Logging;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
     /// <summary>
     /// A code and assembly generator used to generate schema

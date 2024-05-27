@@ -6,11 +6,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Bam.Net.Data.Schema;
-using Bam.Net.ServiceProxy;
+using Bam.Data.Schema;
+using Bam.ServiceProxy;
 using System.Reflection;
-using Bam.Net.Data.Repositories;
-using Bam.Net;
+using Bam.Data.Repositories;
+using Bam;
 
 namespace Bam.Data.Repositories
 {
@@ -35,7 +35,7 @@ namespace Bam.Data.Repositories
 
         public virtual string Render()
         {
-            return TemplateRenderer.Render("Wrapper", this);//return Bam.Net.Handlebars.Render("Wrapper", this);
+            return TemplateRenderer.Render("Wrapper", this);//return Bam.Handlebars.Render("Wrapper", this);
         }
 
         public void Render(Stream output)

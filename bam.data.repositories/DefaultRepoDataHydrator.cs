@@ -1,9 +1,9 @@
-﻿using Bam.Net.Logging;
+﻿using Bam.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
     public class DefaultRepoDataHydrator : RepoDataHydrator
     {

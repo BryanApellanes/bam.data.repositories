@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
     public class TemplatedWrapperGenerator : WrapperGenerator, ITemplatedWrapperGenerator
     {

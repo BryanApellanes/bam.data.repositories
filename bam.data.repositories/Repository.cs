@@ -7,12 +7,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
-using Bam.Net.Logging;
+using Bam.Logging;
 using System.Collections;
 using System.Runtime.CompilerServices;
 using Bam.Data;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
     [Serializable]
 	public abstract class Repository : Loggable, IRepository

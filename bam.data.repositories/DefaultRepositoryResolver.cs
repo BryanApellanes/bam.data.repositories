@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Bam.Net.ServiceProxy;
-using Bam.Net.Logging;
+using Bam.ServiceProxy;
+using Bam.Logging;
 
-namespace Bam.Net.Data.Repositories
+namespace Bam.Data.Repositories
 {
     public class DefaultRepositoryResolver : RepositoryResolver
     {
