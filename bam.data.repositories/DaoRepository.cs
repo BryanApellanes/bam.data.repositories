@@ -188,13 +188,13 @@ namespace Bam.Data.Repositories
         [Verbosity(VerbosityLevel.Warning, SenderMessageFormat = "Missing {PropertyType} property: {ClassName}.{PropertyName}")]
         public event EventHandler SchemaWarning;
 
-        Assembly _daoAssembly;
+        Assembly? _daoAssembly;
         /// <summary>
         /// The assembly to look for Dao definitions in.
         /// This may or may not be generated and can be
         /// user/developer specified.
         /// </summary>
-        public Assembly DaoAssembly
+        public Assembly? DaoAssembly
         {
             get => _daoAssembly;
             set
@@ -267,7 +267,7 @@ namespace Bam.Data.Repositories
             return DaoNamespace;
         }
 
-        public Assembly GenerateDaoAssembly(bool useExisting = true)
+        public Assembly? GenerateDaoAssembly(bool useExisting = true)
         {
             Initialize();
             _daoAssembly = TypeToDaoGenerator.GetDaoAssembly(useExisting);
@@ -275,21 +275,21 @@ namespace Bam.Data.Repositories
             return _daoAssembly;
         }
 
-        bool isInitialized;
+        bool _isInitialized;
 		readonly object _initLock = new object();
 		public virtual void Initialize()
 		{
-            if (!isInitialized)
+            if (!_isInitialized)
             {
                 lock (_initLock)
                 {
-                    if (!isInitialized)
+                    if (!_isInitialized)
                     {
                         if (!StorableTypes.Any())
                         {
                             throw new InvalidOperationException("No types were specified.  Call AddType for each type to store.");
                         }
-                        isInitialized = true;
+                        _isInitialized = true;
                         TypeToDaoGenerator.AddTypes(StorableTypes);
                     }
                 }
@@ -741,7 +741,7 @@ namespace Bam.Data.Repositories
             {
                 return new List<object>();
             }
-            MethodInfo whereMethod = daoType.GetMethod("Where", new Type[] { typeof(QueryFilter), typeof(Database) });
+            MethodInfo? whereMethod = daoType.GetMethod("Where", new Type[] { typeof(QueryFilter), typeof(Database) });
             IEnumerable daoResults = (IEnumerable)whereMethod.Invoke(null, new object[] { query, Database });
             if (wrap)
             {

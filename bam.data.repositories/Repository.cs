@@ -282,7 +282,7 @@ namespace Bam.Data.Repositories
 	        return RetrieveByCompositeKey<T>(toLoad.CompositeKey);
         }
 
-        public virtual T RetrieveByCompositeKey<T>(ulong compositeKey) where T : CompositeKeyAuditRepoData, new()
+        public virtual T? RetrieveByCompositeKey<T>(ulong compositeKey) where T : CompositeKeyAuditRepoData, new()
         {
 	        return Query<T>(new Dictionary<string, object>
 	        {
@@ -290,7 +290,7 @@ namespace Bam.Data.Repositories
 	        }).FirstOrDefault();
         }
         
-        public virtual T RetrieveByCompositeKey<T>(string compositeKey) where T : CompositeKeyAuditRepoData, new()
+        public virtual T? RetrieveByCompositeKey<T>(string compositeKey) where T : CompositeKeyAuditRepoData, new()
         {
 	        return Query<T>(new Dictionary<string, object>
 	        {
@@ -300,7 +300,7 @@ namespace Bam.Data.Repositories
         
         public virtual object Retrieve(string typeIdentifier, string instanceIdentifier)
         {
-            Type type = Type.GetType(typeIdentifier, true);
+            Type? type = Type.GetType(typeIdentifier, true);
             Args.ThrowIfNull(type, "type");
             return Retrieve(type, instanceIdentifier);
         }
