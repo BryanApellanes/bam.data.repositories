@@ -4,10 +4,14 @@
 using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Xml;
 using Bam.Console;
 using Bam.Data.Repositories;
 using Bam.Data.Schema;
@@ -90,7 +94,7 @@ namespace Bam.Data.Repositories
         /// <summary>
         /// A filter function used to exclude anonymous types
         /// that were created by the use of lambda functions from 
-        /// having dao types generated
+        /// having dao types generated.
         /// </summary>
         public static Func<Type, bool> ClrDaoTypeFilter
         {
@@ -252,7 +256,7 @@ namespace Bam.Data.Repositories
 
         public Assembly GetDaoAssembly(bool useExisting = true)
         {
-            GeneratedDaoAssemblyInfo info = GeneratedAssemblies.GetGeneratedAssemblyInfo(SchemaName) as GeneratedDaoAssemblyInfo;
+            GeneratedDaoAssemblyInfo? info = GeneratedAssemblies.GetGeneratedAssemblyInfo(SchemaName) as GeneratedDaoAssemblyInfo;
             if (info == null)
             {
                 TypeSchema typeSchema = DaoSchemaDefinitionCreateResult.TypeSchema;
@@ -530,7 +534,7 @@ namespace Bam.Data.Repositories
 
         protected virtual HashSet<string> GetDefaultReferenceAssemblies()
         {
-            HashSet<string> references = new HashSet<string>(RoslynCompiler.DefaultAssembliesToReference.Select(a => a.GetFileInfo().FullName).ToArray())
+            HashSet<string> references = new HashSet<string>(DefaultAssembliesToReference.Select(a => a.GetFileInfo().FullName).ToArray())
             {
                 typeof(JsonIgnoreAttribute).Assembly.GetFileInfo().FullName,
                 typeof(Qi.Qi).Assembly.GetFileInfo().FullName,
@@ -614,6 +618,32 @@ namespace Bam.Data.Repositories
         {
             TypeSchemaTempPathProvider = (schemaDef, typeSchema) =>
                 System.IO.Path.Combine(RuntimeSettings.GenDir, "DaoTemp_{0}".Format(schemaDef.Name));
+        }
+        static Assembly[] _defaultAssembliesToReference = new Assembly[] { };
+        public static Assembly[] DefaultAssembliesToReference // TODO: move this to TypeToDaoGenerator
+        {
+            get
+            {
+                if (_defaultAssembliesToReference.Length == 0)
+                {
+                    HashSet<Assembly> defaultAssemblies = new HashSet<Assembly>
+                    {
+                        typeof(DynamicObject).Assembly,
+                        typeof(XmlDocument).Assembly,
+                        typeof(DataTable).Assembly,
+                        typeof(object).Assembly,
+                        typeof(JsonWriter).Assembly,
+                        typeof(Enumerable).Assembly,
+                        typeof(MarshalByValueComponent).Assembly,
+                        typeof(IComponent).Assembly,
+                        typeof(IServiceProvider).Assembly,
+                        Assembly.GetExecutingAssembly()
+                    };
+                    _defaultAssembliesToReference = defaultAssemblies.ToArray();
+                }
+                
+                return _defaultAssembliesToReference;
+            }
         }
     }
 }

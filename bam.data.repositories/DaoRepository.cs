@@ -89,10 +89,7 @@ namespace Bam.Data.Repositories
         /// </summary>
         public string BaseNamespace
         {
-            get
-            {
-                return _baseNamespace;
-            }
+            get => _baseNamespace;
             set
             {
                 _baseNamespace = value;
@@ -106,38 +103,20 @@ namespace Bam.Data.Repositories
         /// </summary>
         public bool KeepSource
         {
-            get
-            {
-                return TypeToDaoGenerator.KeepSource;
-            }
-            set
-            {
-                TypeToDaoGenerator.KeepSource = value; 
-            }
+            get => TypeToDaoGenerator.KeepSource;
+            set => TypeToDaoGenerator.KeepSource = value;
         }
 
         public Func<IDaoSchemaDefinition, ITypeSchema, string> TypeSchemaTempPathProvider
         {
-            get
-            {
-                return TypeToDaoGenerator.TypeSchemaTempPathProvider;
-            }
-            set
-            {
-                TypeToDaoGenerator.TypeSchemaTempPathProvider = value;
-            }
+            get => TypeToDaoGenerator.TypeSchemaTempPathProvider;
+            set => TypeToDaoGenerator.TypeSchemaTempPathProvider = value;
         }
 
         public string SchemaName
         {
-            get
-            {
-                return TypeToDaoGenerator.SchemaName;
-            }
-            set
-            {
-                TypeToDaoGenerator.SchemaName = value;
-            }
+            get => TypeToDaoGenerator.SchemaName;
+            set => TypeToDaoGenerator.SchemaName = value;
         }
 
         /// <summary>
@@ -154,8 +133,8 @@ namespace Bam.Data.Repositories
 
 		public bool WarningsAsErrors
         {
-            get { return TypeToDaoGenerator.WarningsAsErrors; }
-            set { TypeToDaoGenerator.WarningsAsErrors = value; }
+            get => TypeToDaoGenerator.WarningsAsErrors;
+            set => TypeToDaoGenerator.WarningsAsErrors = value;
         }
 
 		public IDatabase Database { get; set; }
@@ -163,15 +142,9 @@ namespace Bam.Data.Repositories
 		[Verbosity(VerbosityLevel.Information)]
 		public event EventHandler GenerateDaoAssemblySucceeded;		
 
-		public IDaoSchemaDefinition SchemaDefinition
-		{
-			get
-			{
-				return TypeToDaoGenerator.DaoSchemaDefinitionCreateResult.DaoSchemaDefinition;
-			}
-		}
+		public IDaoSchemaDefinition SchemaDefinition => TypeToDaoGenerator.DaoSchemaDefinitionCreateResult.DaoSchemaDefinition;
 
-        TypeSchema _typeSchema;
+		TypeSchema _typeSchema;
 		public ITypeSchema TypeSchema
 		{
 			get
@@ -209,14 +182,14 @@ namespace Bam.Data.Repositories
         /// DaoAssembly to null, effectively requiring that it be regenerated.  
         /// Directly setting the DaoAssembly sets this to false.  If the 
         /// DaoAssembly has already been set, and you wish for it not to be reset, 
-        /// set this to false.  The default value is true;
+        /// set this to false.  The default value is true.
         /// </summary>
         protected bool NullifyDaoAssemblyOnAddType { get; set; }
 
         protected EnsureSchemaStatus SchemaStatus { get; set; }
         /// <summary>
         /// Generates a Dao Assembly for the underlying 
-        /// storable types if it has not yet been generated
+        /// storable types if it has not yet been generated.
         /// </summary>
         /// <returns></returns>
 		public Assembly EnsureDaoAssemblyAndSchema(bool useExisting = true)
@@ -246,7 +219,7 @@ namespace Bam.Data.Repositories
 
         /// <summary>
         /// Sets the DaoNamespace to equal the namespace
-        /// of the specified type with the suffix .Dao
+        /// of the specified type with the suffix `.Dao`.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
@@ -257,7 +230,7 @@ namespace Bam.Data.Repositories
 
         /// <summary>
         /// Sets the DaoNamespace to equal the namespace of the specified
-        /// type with the suffix .Dao
+        /// type with the suffix `.Dao`.
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
@@ -305,8 +278,8 @@ namespace Bam.Data.Repositories
         }
 
         /// <summary>
-        /// Convert the specified instance to it's dynamic
-        /// json safe representation
+        /// Convert the specified instance to its dynamic
+        /// json safe representation.
         /// </summary>
         /// <param name="instance"></param>
         /// <returns></returns>
