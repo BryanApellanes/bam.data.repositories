@@ -47,8 +47,14 @@ namespace Bam.Data.Repositories
 
             _daoGenerator = daoGenerator;
             _daoGenerator.Namespace = this.DaoNamespace;
-            SetWrapperGenerator(wrapperGenerator);
 
+            if (wrapperGenerator != null)
+            {
+                _wrapperGenerator = wrapperGenerator;
+                _wrapperGenerator.WrapperNamespace = this.WrapperNamespace;
+                _wrapperGenerator.DaoNamespace = this.DaoNamespace;
+            }
+            
             _types = new HashSet<Type>();
             _additionalReferenceAssemblies = new HashSet<Assembly>();
             _additionalReferenceTypes = new HashSet<Type>();
@@ -57,7 +63,8 @@ namespace Bam.Data.Repositories
             SubscribeToSchemaWarnings();
             if (logger != null)
             {
-                Subscribe(logger);
+                _schemaProvider.Subscribe(logger);
+                base.Subscribe(logger);
             }
         }
 
@@ -116,8 +123,7 @@ namespace Bam.Data.Repositories
 
         /// <summary>
         /// The namespace containing POCO types to generate dao types for.  Setting 
-        /// the BaseNamespace also sets the DaoNamespace
-        /// and WrapperNamespace.
+        /// the BaseNamespace also sets the DaoNamespace and WrapperNamespace.
         /// </summary>
         public string BaseNamespace
         {
@@ -167,12 +173,6 @@ namespace Bam.Data.Repositories
                 return _schemaName;
             }
             set => _schemaName = value;
-        }
-
-        public override void Subscribe(ILogger logger)
-        {
-            _schemaProvider.Subscribe(logger);
-            base.Subscribe(logger);
         }
 
         HashSet<Type> _types;
@@ -448,14 +448,6 @@ namespace Bam.Data.Repositories
                 Message = rex.GetMessageAndStackTrace();
                 compilationEx = rex;
                 FireGenerateDaoAssemblyFailed(rex);
-                return false;
-            }
-            // TODO: eliminate the need for this catch block and delete it.
-            catch (CompilationException cex)
-            {
-                Message = cex.GetMessageAndStackTrace();
-                compilationEx = cex;
-                FireGenerateDaoAssemblyFailed(cex);
                 return false;
             }
         }

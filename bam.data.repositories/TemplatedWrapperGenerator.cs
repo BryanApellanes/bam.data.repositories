@@ -26,7 +26,7 @@ namespace Bam.Data.Repositories
             lock (_generateLock)
             {
                 string fileName = $"{WrapperNamespace}.Wrapper.dll";
-                new DirectoryInfo(WriteSourceTo).ToAssembly(fileName, out CompilerResults results);
+                new DirectoryInfo(WriteSourceTo).ToAssembly(fileName, out byte[] results);
                 GeneratedAssemblyInfo result = new GeneratedAssemblyInfo(fileName, results);
                 result.Save();
                 return result;
