@@ -1,12 +1,5 @@
 ﻿using Bam.CoreServices.AssemblyManagement;
-using Bam;
 using Microsoft.CodeAnalysis;
-using MongoDB.Bson.Serialization.IdGenerators;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Bam.Data.Repositories
 {
