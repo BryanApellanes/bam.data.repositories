@@ -20,8 +20,8 @@ namespace Bam.Data.Repositories
     /// </summary>
     public class DaoInheritanceRepository : DaoRepository
     {
-        public DaoInheritanceRepository(ISchemaProvider schemaGenerator, IDaoGenerator daoGenerator, IWrapperGenerator wrapperGenerator, IDatabase? database = null, ILogger? logger = null)
-            :base(schemaGenerator, daoGenerator, wrapperGenerator, database, logger)
+        public DaoInheritanceRepository(ISchemaProvider schemaProvider, IDaoGenerator daoGenerator, IWrapperGenerator wrapperGenerator, IDatabase? database = null, ILogger? logger = null)
+            :base(schemaProvider, daoGenerator, wrapperGenerator, database, logger)
         {
             BlockOnChildWrites = true;
             BackgroundThreadQueue = new BackgroundThreadQueue<ISqlStringBuilder> { Process = Execute };
@@ -53,7 +53,7 @@ namespace Bam.Data.Repositories
                 if(_schemaDefinitionCreateResult == null)
                 {
                     Args.ThrowIf<InvalidOperationException>(!StorableTypes.Any(), "No Types were specified, call AddType for each type to store");
-                    _schemaDefinitionCreateResult = SchemaGenerator.CreateDaoSchemaDefinition(StorableTypes);
+                    _schemaDefinitionCreateResult = SchemaProvider.CreateDaoSchemaDefinition(StorableTypes);
                 }
                 return _schemaDefinitionCreateResult;
             }                

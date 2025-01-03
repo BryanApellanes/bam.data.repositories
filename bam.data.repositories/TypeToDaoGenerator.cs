@@ -400,6 +400,16 @@ namespace Bam.Data.Repositories
 
             if (TypeSchemaWarnings.Count > 0 && WarningsAsErrors)
             {
+                // Account for whether the CompositeKeyMap type was added so that the CompositeKey can be mapped to 
+                // an object Cuid
+                if (TypeSchemaWarnings.Count == 1)
+                {
+                    ITypeSchemaWarning? warning = TypeSchemaWarnings.FirstOrDefault();
+                    if (warning?.Warning == Schema.TypeSchemaWarnings.DifferentTypeNamespacesFound && Types.Contains(typeof(CompositeKeyMap)))
+                    {
+                        return;
+                    }
+                }
                 throw new TypeSchemaException(TypeSchemaWarnings.ToArray());
             }
         }
@@ -497,7 +507,7 @@ namespace Bam.Data.Repositories
             RoslynCompiler compiler = new RoslynCompiler();
             compiler.AddMetadataReferenceResolver(new TypeSchemaMetadataReferenceResolver(DaoSchemaDefinitionCreateResult.TypeSchema));
             compiler.AddMetadataReferenceResolver(new DaoGeneratorMetadataReferenceResolver());
-            compiler.AddMetadataReferenceResolver(new StaticAssemblyListReferencePackMetadataReferenceResolver("System.Xml.ReaderWriter"));
+            compiler.AddMetadataReferenceResolver(new StaticAssemblyListReferencePackMetadataReferenceResolver("System.Xml.ReaderWriter", "System.Collections"));
             return compiler.CompileDirectories(assemblyNameToCreate, new DirectoryInfo[] { new DirectoryInfo(writeSourceTo) });
         }
 
