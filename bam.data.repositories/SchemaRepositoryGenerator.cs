@@ -12,8 +12,7 @@ using Bam.Logging;
 namespace Bam.Data.Repositories
 {
     /// <summary>
-    /// A code and assembly generator used to generate schema
-    /// specific dao repositories
+    /// A code and assembly generator used to generate schema specific dao repositories.
     /// </summary>
     public class SchemaRepositoryGenerator : TypeToDaoGenerator, IRepositorySourceGenerator
     {
@@ -43,7 +42,7 @@ namespace Bam.Data.Repositories
 
         public Assembly SourceAssembly { get; set; }
 
-        public void Configure(IDaoRepoGenerationConfig config)
+        public void Configure(IDaoRepoGenerationConfig? config)
         {
             if (config == null)
             {
@@ -63,8 +62,13 @@ namespace Bam.Data.Repositories
         public void AddTypes()
         {
             EnsureConfigOrDie();
-            SourceAssembly = Assembly.LoadFile(Config.TypeAssembly);
-            Args.ThrowIfNull(SourceAssembly, $"Assembly not found {Config.TypeAssembly}", "SourceAssembly");
+            string assemblyPath = Config.TypeAssembly;
+            if (assemblyPath.StartsWith("~"))
+            {
+                assemblyPath = new HomePath(assemblyPath);
+            }
+            SourceAssembly = Assembly.LoadFile(assemblyPath);
+            Args.ThrowIfNull(SourceAssembly, $"Assembly not found {assemblyPath}", "SourceAssembly");
             AddTypes(SourceAssembly, Config.FromNamespace);
         }
 

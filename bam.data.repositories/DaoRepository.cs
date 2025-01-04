@@ -81,6 +81,10 @@ namespace Bam.Data.Repositories
             {
 	            if (TypeToDaoGenerator == null)
 	            {
+		            if (string.IsNullOrEmpty(_daoNamespace))
+		            {
+			            _daoNamespace = $"{_baseNamespace}.Dao";
+		            }
 		            return _daoNamespace;
 	            }
                 return TypeToDaoGenerator.DaoNamespace;
@@ -122,6 +126,10 @@ namespace Bam.Data.Repositories
 	        {
 		        if (TypeToDaoGenerator == null)
 		        {
+			        if (string.IsNullOrEmpty(_wrapperNamespace))
+			        {
+				        _wrapperNamespace = $"{_baseNamespace}.Wrappers";
+			        }
 			        return _wrapperNamespace;
 		        }
 

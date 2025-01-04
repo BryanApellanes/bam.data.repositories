@@ -507,7 +507,7 @@ namespace Bam.Data.Repositories
             RoslynCompiler compiler = new RoslynCompiler();
             compiler.AddMetadataReferenceResolver(new TypeSchemaMetadataReferenceResolver(DaoSchemaDefinitionCreateResult.TypeSchema));
             compiler.AddMetadataReferenceResolver(new DaoGeneratorMetadataReferenceResolver());
-            compiler.AddMetadataReferenceResolver(new StaticAssemblyListReferencePackMetadataReferenceResolver("System.Xml.ReaderWriter", "System.Collections"));
+            compiler.AddMetadataReferenceResolver(new StaticAssemblyListReferencePackMetadataReferenceResolver("System.Xml.ReaderWriter"));
             return compiler.CompileDirectories(assemblyNameToCreate, new DirectoryInfo[] { new DirectoryInfo(writeSourceTo) });
         }
 
