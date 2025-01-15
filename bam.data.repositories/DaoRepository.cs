@@ -28,7 +28,7 @@ namespace Bam.Data.Repositories
     {
 	    protected DaoRepository()
 	    {
-		    Database = DataProvider.Current.GetSysDatabaseFor(this);
+		    Database = DataSourceProvider.Current.GetSysDatabaseFor(this);
 		    SchemaProvider = new SchemaProvider();
 	    }
 
@@ -49,14 +49,14 @@ namespace Bam.Data.Repositories
             this.WrapByDefault = true;
             this.WarningsAsErrors = true;
 
-            this.Database = DataProvider.Current.GetSysDatabaseFor(this);
+            this.Database = DataSourceProvider.Current.GetSysDatabaseFor(this);
             this.Logger = Log.Default;
         }
 
         public DaoRepository(ISchemaProvider schemaProvider, IDaoGenerator daoGenerator, IWrapperGenerator wrapperGenerator, IDatabase? database, ILogger? logger)
             : this(schemaProvider, daoGenerator, wrapperGenerator)
         {
-            this.Database = database ?? DataProvider.Current.GetSysDatabaseFor(this);
+            this.Database = database ?? DataSourceProvider.Current.GetSysDatabaseFor(this);
             this.Logger = logger ?? Log.Default;
             this.Subscribe(Logger);
         }

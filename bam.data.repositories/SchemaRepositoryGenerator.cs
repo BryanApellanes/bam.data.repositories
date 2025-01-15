@@ -23,16 +23,27 @@ namespace Bam.Data.Repositories
                  settings.WrapperGenerator
             )
         {
-            if (logger != null)
-            {
-                Subscribe(logger);
-            }
+            Logger = logger ?? Log.Default;
 
             DaoGenerator = new Schema.DaoGenerator(settings.DaoCodeWriter);
             WrapperGenerator = settings.WrapperGenerator;
             Configure(settings.DaoRepoGenerationConfig);
         }
 
+        ILogger? _logger;
+        protected ILogger? Logger
+        {
+            get => _logger;
+            set
+            {
+                _logger = value;
+                if(_logger != null)
+                {
+                    Subscribe(_logger);
+                };
+            } 
+        }
+        
         public ITemplateRenderer TemplateRenderer { get; protected set; }
 
         public IDaoRepoGenerationConfig Config
@@ -67,7 +78,7 @@ namespace Bam.Data.Repositories
             {
                 assemblyPath = new HomePath(assemblyPath);
             }
-            SourceAssembly = Assembly.LoadFile(assemblyPath);
+            SourceAssembly = Assembly.LoadFrom(assemblyPath);
             Args.ThrowIfNull(SourceAssembly, $"Assembly not found {assemblyPath}", "SourceAssembly");
             AddTypes(SourceAssembly, Config.FromNamespace);
         }

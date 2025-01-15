@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Reflection;
 using Bam.Logging;
 using System.Collections;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Bam.Data;
 
@@ -23,12 +24,17 @@ namespace Bam.Data.Repositories
             RequireUuid = true;
             RequireCuid = false;
             RepoDataHydrator = Repositories.RepoDataHydrator.DefaultRepoDataHydrator;
-        }
+            DataValidator = o => new DataValidationResult()
+            {
+	            Success = true
+            };
+		}
         
         public bool RequireUuid { get; set; }
         public bool RequireCuid { get; set; }
 
         public IRepoDataHydrator RepoDataHydrator { get; set; }
+        public Func<object, DataValidationResult> DataValidator { get; set; }
 
         #region IRepository Members
 
@@ -48,23 +54,14 @@ namespace Bam.Data.Repositories
                 }
                 return _defaultType;
             }
-            set
-            {
-                _defaultType = value;
-            }
+            set => _defaultType = value;
         }
 
         HashSet<Type> _storableTypes;
 
-		public IEnumerable<Type> StorableTypes
-		{
-			get
-			{
-				return _storableTypes;
-			}
-		}
+		public IEnumerable<Type> StorableTypes => _storableTypes;
 
-        public virtual bool TryHydrate(IRepoData data)
+		public virtual bool TryHydrate(IRepoData data)
         {
             return RepoDataHydrator?.TryHydrate(data, this) ?? true;
         }
@@ -155,10 +152,24 @@ namespace Bam.Data.Repositories
             return Save(toSave.GetType(), toSave);
         }
 
+        public bool ThrowOnValidationFailure { get; set; }
+        
+        /// <summary>
+        /// The event that fires before validation on a call to Save.
+        /// </summary>
+        public event EventHandler Validating;
+        
+        /// <summary>
+        /// The event that fires after validation on a call to Save.
+        /// </summary>
+        public event EventHandler Validated;
+
+        public event EventHandler ValidationFailed;
+        
         /// <summary>
         /// The event that fires before an update is 
-        /// made by calling Save.  Will not fire on
-        /// calls direct to Update
+        /// made by calling Save.  Does not fire on
+        /// calls direct to Update.
         /// </summary>
         public event EventHandler Updating;
         /// <summary>
@@ -180,12 +191,7 @@ namespace Bam.Data.Repositories
         /// calls direct to Update
         /// </summary>
         public event EventHandler Created;
-
-        public T Save<T>(KeyedRepoData repoData) where T : KeyedRepoData, new()
-        {
-	        return repoData.SaveByKey<T>(this);
-        }
-
+        
         public T Save<T>(KeyedAuditRepoData repoData) where T : KeyedAuditRepoData, new()
         {
 	        return repoData.SaveByKey<T>(this);
@@ -193,17 +199,40 @@ namespace Bam.Data.Repositories
 
         /// <summary>
         /// Calls update for the specified object toSave if
-        /// it has Id greater than 0 otherwise calls Create
+        /// it has Id greater than 0 otherwise calls Create.
         /// </summary>
         /// <param name="toSave"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        public virtual object Save(Type type, object toSave)
+        public virtual object? Save(Type type, object toSave)
 		{
             SetMeta(toSave);
 			ulong? id = GetIdValue(toSave);
             toSave.Property("Modified", DateTime.UtcNow, false);
 			object result = null;
+			FireEvent(Validating, new RepositoryEventArgs(toSave, type));
+			DataValidationResult validationResult = DataValidator(toSave);
+			if (!validationResult.Success)
+			{
+				RepositoryEventArgs eventArgs = new RepositoryEventArgs(toSave, type);
+				if (!string.IsNullOrEmpty(validationResult.Message))
+				{
+					eventArgs.Message = validationResult.Message;
+				}
+				FireEvent(ValidationFailed, eventArgs);
+				if (ThrowOnValidationFailure)
+				{
+					if (validationResult.Exception != null)
+					{
+						throw validationResult.Exception;
+					}
+
+					throw new DataValidationException(validationResult.Message ?? "data validation failed");
+				}
+
+				return result;
+			}
+			FireEvent(Validated, new RepositoryEventArgs(toSave, type));
 			if (id.HasValue && id.Value != 0)
 			{
                 FireEvent(Updating, new RepositoryEventArgs(toSave, type));                

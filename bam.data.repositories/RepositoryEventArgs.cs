@@ -38,7 +38,7 @@ namespace Bam.Data.Repositories
 			this.Message = ex.Message;
 			if (!string.IsNullOrEmpty(ex.StackTrace))
 			{
-				this.Message = string.Format("{0}:\r\nStackTrace: \t{1}", Message, ex.StackTrace);
+				this.Message = $"{Message}:\r\nStackTrace: \t{ex.StackTrace}";
 			}
 		}
         public Type Type { get; set; }

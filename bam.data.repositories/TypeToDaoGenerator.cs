@@ -27,8 +27,7 @@ using Newtonsoft.Json;
 namespace Bam.Data.Repositories
 {
     /// <summary>
-    /// A class used to generate data access objects from
-    /// CLR types.
+    /// A class used to generate data access objects from CLR types.
     /// </summary>
     [Serializable]
     public class TypeToDaoGenerator : Loggable, IGeneratesDaoAssembly, IHasTypeSchemaTempPathProvider, ISourceGenerator

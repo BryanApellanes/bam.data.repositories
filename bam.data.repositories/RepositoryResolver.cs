@@ -11,7 +11,7 @@ namespace Bam.Data.Repositories
     public abstract class RepositoryResolver : Loggable, IRepositoryResolver
     {
         public ILogger Logger { get; set; }
-        public DataProvider DataProvider { get; set; }
+        public DataSourceProvider DataSourceProvider { get; set; }
         public Func<IHttpContext, IRepository> GetRepositoryFunc { get; set; }
 
         public bool TryGetRepository<T>(IHttpContext context, out T repo) where T : IRepository
