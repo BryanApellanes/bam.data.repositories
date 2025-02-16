@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Bam.Data.MsSql;
-using Bam.Data.MySql;
+﻿using Bam.Data.MySql;
 using Bam.Data.Npgsql;
 using Bam.Data.Oracle;
 using Bam.Data.SQLite;

@@ -1,12 +1,9 @@
 /*
 	Copyright © Bryan Apellanes 2015  
 */
-using Bam.CoreServices;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using Bam.DependencyInjection;
+using Bam.Services;
 
 namespace Bam.Data.Repositories
 {

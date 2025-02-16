@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Bam.Data.Repositories
+﻿namespace Bam.Data.Repositories
 {
     // TODO: rename this to NamedRepoData
     public class FsRepoData: AuditRepoData

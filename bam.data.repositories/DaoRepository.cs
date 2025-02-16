@@ -1,16 +1,11 @@
 /*
 	Copyright © Bryan Apellanes 2015  
 */
-using System;
+
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using Bam.Data.Repositories;
 using Bam.Data.Schema;
-using Bam.Data.Schema;
-using Bam.Data.SQLite;
 using Bam.Logging;
 
 namespace Bam.Data.Repositories
@@ -1445,8 +1440,7 @@ namespace Bam.Data.Repositories
             ulong parentId = GetIdValue(poco).Value;
             if (parentId <= 0)
             {
-                Type pocoType = poco.GetType();
-                Logger.AddEntry("IdValue not found for specified parent instance: Type={0}.{1}, {2}", pocoType.Namespace, pocoType.Name, poco.ToString());
+	            // this may be a create operation, which means that there is no parent id yet
                 return results;
             }
             // TODO: review why the call to Dao.MapUlongToLong is necessary 

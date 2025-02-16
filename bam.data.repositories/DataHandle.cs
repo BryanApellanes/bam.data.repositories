@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Text.Json.Serialization;
-using MongoDB.Driver.Linq;
 using YamlDotNet.Serialization;
 
 namespace Bam.Data.Repositories;

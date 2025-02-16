@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Bam.Data.Repositories
+﻿namespace Bam.Data.Repositories
 {
     /// <summary>
     /// Maps the composite key of an instance to its Cuid.

@@ -1,17 +1,11 @@
 /*
 	Copyright © Bryan Apellanes 2015  
 */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using System.Reflection;
 using Bam.Logging;
 using System.Collections;
-using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using Bam.Data;
 
 namespace Bam.Data.Repositories
 {
@@ -146,7 +140,7 @@ namespace Bam.Data.Repositories
             AddNamespace(type.Assembly, type.Namespace);
         }
 
-        public object Save(object toSave)
+        public object? Save(object toSave)
         {
             Args.ThrowIfNull(toSave, "toSave");
             return Save(toSave.GetType(), toSave);

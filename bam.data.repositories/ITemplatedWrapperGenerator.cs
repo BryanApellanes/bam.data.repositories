@@ -1,6 +1,4 @@
-﻿using Bam.Data.Repositories;
-
-namespace Bam.Data.Repositories
+﻿namespace Bam.Data.Repositories
 {
     public interface ITemplatedWrapperGenerator : IWrapperGenerator
     {

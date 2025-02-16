@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Bam.Data.Schema;
-using Bam;
+﻿using Bam.Data.Schema;
 using Newtonsoft.Json;
-using System.CodeDom.Compiler;
 using System.Reflection;
 
 namespace Bam.Data.Repositories

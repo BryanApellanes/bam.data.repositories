@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using Bam.Data;
+﻿using System.Reflection;
 using Bam.Data.Schema;
 using Bam.Logging;
 

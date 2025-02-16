@@ -1,6 +1,4 @@
-﻿using Bam.Data;
-using Bam.Data.Repositories;
-using Bam.Data.Schema;
+﻿using Bam.Data.Schema;
 
 namespace Bam.Data.Repositories
 {

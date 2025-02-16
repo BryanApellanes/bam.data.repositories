@@ -1,11 +1,4 @@
-﻿using Bam.Data.Repositories;
-using System;
-using System.CodeDom.Compiler;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-
-namespace Bam.Data.Repositories
+﻿namespace Bam.Data.Repositories
 {
     public class TemplatedWrapperGenerator : WrapperGenerator, ITemplatedWrapperGenerator
     {

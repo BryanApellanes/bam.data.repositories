@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Bam.Logging;
+﻿using Bam.Logging;
 using Bam.Services.DataReplication;
 
 namespace Bam.Data.Repositories

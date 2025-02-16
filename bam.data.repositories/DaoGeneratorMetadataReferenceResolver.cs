@@ -1,16 +1,10 @@
 ﻿using Bam.CoreServices.AssemblyManagement;
-using Bam.Data.Qi;
 using Microsoft.CodeAnalysis;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Dynamic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace Bam.Data.Repositories

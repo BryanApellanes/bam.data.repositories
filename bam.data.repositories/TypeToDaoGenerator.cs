@@ -1,25 +1,15 @@
 /*
 	Copyright © Bryan Apellanes 2015  
 */
-using System;
-using System.CodeDom.Compiler;
-using System.Collections.Generic;
+
 using System.ComponentModel;
 using System.Data;
 using System.Dynamic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml;
-using Bam.Console;
-using Bam.Data.Repositories;
 using Bam.Data.Schema;
 using Bam.Analytics;
-using Bam.Configuration;
-using Bam.CoreServices.AssemblyManagement;
-using Bam.Data.Qi;
-using Bam.Data.Schema;
 using Bam.Logging;
 using Bam.Services;
 using Newtonsoft.Json;
