@@ -44,6 +44,12 @@ namespace Bam.Data.Repositories
             get; private set;
         }
 
+        public override bool WarningsAsErrors
+        {
+            get => Config?.WarningsAsErrors ?? base.WarningsAsErrors;
+            set => base.WarningsAsErrors = value;
+        }
+        
         public Assembly SourceAssembly { get; set; }
 
         public void Configure(IDaoRepoGenerationConfig? config)
@@ -121,6 +127,17 @@ namespace Bam.Data.Repositories
             Args.ThrowIf(Types.Length == 0, "No types were added");
             Args.ThrowIfNull(TemplateRenderer, "TemplateRenderer");
 
+            string backupDirectory = writeSourceTo;
+            while (Directory.Exists(backupDirectory))
+            {
+                backupDirectory = backupDirectory.GetNextDirectoryName();
+            }
+
+            if (!backupDirectory.Equals(writeSourceTo))
+            {
+                Directory.Move(writeSourceTo, backupDirectory);
+            }
+            
             schemaName = schemaName ?? SchemaName;
             SchemaName = schemaName;
             base.GenerateSource(writeSourceTo);

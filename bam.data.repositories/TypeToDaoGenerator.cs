@@ -191,7 +191,7 @@ namespace Bam.Data.Repositories
 
             if (type.HasEnumerableOfMe(type))
             {
-                throw new NotSupportedException("Storable types cannot have enumerable properties that are of the same type as themselves.");
+                throw new NotSupportedException($"Storable types cannot have enumerable properties that are of the same type as themselves: ({type?.FullName})");
             }
 
             AddAdditionalReferenceAssemblies(new TypeInheritanceDescriptor(type));
@@ -319,7 +319,7 @@ namespace Bam.Data.Repositories
         public bool MissingColumns => DaoSchemaDefinitionCreateResult.MissingColumns;
         public SchemaWarnings Warnings => DaoSchemaDefinitionCreateResult.Warnings;
 
-        public bool WarningsAsErrors
+        public virtual bool WarningsAsErrors
         {
             get; set;
         }

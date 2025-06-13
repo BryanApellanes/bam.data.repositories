@@ -1008,7 +1008,7 @@ namespace Bam.Data.Repositories
         {
             foreach (object value in daoCollection)
             {
-                yield return (T)CreateWrapperCopy(typeof(T), (Dao)value);
+                yield return new DaoRepoData<T>((T)CreateWrapperCopy(typeof(T), (Dao)value), this);
             }
         }
 
