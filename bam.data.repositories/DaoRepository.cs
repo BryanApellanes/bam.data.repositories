@@ -927,7 +927,7 @@ namespace Bam.Data.Repositories
 
                     if (daoType == null)
                     {
-                        Logger.Warning("Unable to get dao type for pocoType ({0}): \r\n\tDao Assembly={1}, \r\n\tBase Type={2}, \r\n\tDaoNamespace={3}", pocoType.GetType().Name, daoAssembly.GetFilePath(), baseType.Name, TypeToDaoGenerator.DaoNamespace);
+                        Logger.Warning("Unable to get dao type for pocoType ({0}): \r\n\tDao Assembly={1}, \r\n\tBase Type={2}, \r\n\tDaoNamespace={3}", pocoType.GetType().Name, daoAssembly.GetFilePath(), baseType.Name, DaoNamespace);
                     }
                     else
                     {

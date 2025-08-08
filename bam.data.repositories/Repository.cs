@@ -22,6 +22,7 @@ namespace Bam.Data.Repositories
             {
 	            Success = true
             };
+            Logger ??= Log.Default;
 		}
         
         public bool RequireUuid { get; set; }
