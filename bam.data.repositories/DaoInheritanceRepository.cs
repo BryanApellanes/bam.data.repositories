@@ -11,6 +11,10 @@ namespace Bam.Data.Repositories
     /// </summary>
     public class DaoInheritanceRepository : DaoRepository
     {
+        protected DaoInheritanceRepository(): base()
+        {
+        }
+
         public DaoInheritanceRepository(ISchemaProvider schemaProvider, IDaoGenerator daoGenerator, IWrapperGenerator wrapperGenerator, IDatabase? database = null, ILogger? logger = null)
             :base(schemaProvider, daoGenerator, wrapperGenerator, database, logger)
         {
@@ -62,15 +66,12 @@ namespace Bam.Data.Repositories
 
         bool _blockOnChildWrites;
         /// <summary>
-        /// If true writing of child collections
-        /// will block on saving of the parent
+        /// Gets or sets a value that determines if writing of child collections
+        /// blocks on saving of the parent.
         /// </summary>
         public bool BlockOnChildWrites
         {
-            get
-            {
-                return _blockOnChildWrites;
-            }
+            get => _blockOnChildWrites;
             set
             {
                 _blockOnChildWrites = value;
