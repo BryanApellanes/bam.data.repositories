@@ -61,7 +61,7 @@ namespace Bam.Data.Repositories
             MethodInfo daoMethod = daoType.GetMethod("Insert");
             object instance = GetRequestBody(HttpContext.Request).FromJson(daoType);
             daoMethod.Invoke(instance, new object[] { database });
-            return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = instance.ToJsonSafe() };
+            return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = instance.ColumnsToJsonSafe() };
         }
 
         public CrudResponse Retrieve(ICrudResponseProvider dcp)
@@ -70,7 +70,7 @@ namespace Bam.Data.Repositories
             IDatabase database = dcp.DaoProxyRegistration.Database;
             MethodInfo daoMethod = daoType.GetMethod("GetById", new Type[] { typeof(long), typeof(Database) });
             long id = GetRequestBody(HttpContext.Request).FromJson<long>();
-            return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = daoMethod.Invoke(null, new object[] { id, database }).ToJsonSafe() };
+            return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = daoMethod.Invoke(null, new object[] { id, database }).ColumnsToJsonSafe() };
         }
 
         public CrudResponse Update(ICrudResponseProvider dcp)
@@ -80,7 +80,7 @@ namespace Bam.Data.Repositories
             MethodInfo daoMethod = daoType.GetMethod("Update", new Type[] { typeof(Database) });
             object instance = GetRequestBody(HttpContext.Request).FromJson(daoType);
             daoMethod.Invoke(instance, new object[] { database });
-            return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = instance.ToJsonSafe() };
+            return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = instance.ColumnsToJsonSafe() };
         }
 
         public CrudResponse Delete(ICrudResponseProvider dcp)
@@ -90,7 +90,7 @@ namespace Bam.Data.Repositories
             MethodInfo daoMethod = daoType.GetMethod("Delete", new Type[] { typeof(Database) });
             object instance = GetRequestBody(HttpContext.Request).FromJson(daoType);
             daoMethod.Invoke(instance, new object[] { database });
-            return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = instance.ToJsonSafe() };
+            return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = instance.ColumnsToJsonSafe() };
         }
 
         public CrudResponse Query(ICrudResponseProvider dcp)
@@ -113,7 +113,7 @@ namespace Bam.Data.Repositories
             collection.Invoke("AddRange", values);
             MethodInfo saveMethod = collectionType.GetMethod("Save", new Type[] { typeof(Database) });
             saveMethod.Invoke(collection, new object[] { database });
-            return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = collection.ToJsonSafe() };
+            return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = collection.ColumnsToJsonSafe() };
         }
 
         protected Dictionary<CrudMethods, Func<CrudResponse>> Methods { get; }

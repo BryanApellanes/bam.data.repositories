@@ -349,7 +349,7 @@ namespace Bam.Data.Repositories
             Type daoType = GetDaoType(instance.GetType());
             Dao o = (Dao)daoType.Construct();
             o.CopyProperties(instance);
-            return o.ToJsonSafe();
+            return o.ColumnsToJsonSafe();
         }
 
         /// <summary>

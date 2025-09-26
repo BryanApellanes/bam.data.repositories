@@ -17,7 +17,7 @@
         public static string[] GetCompositeKeyProperties(Type type)
         {
             List<string> props = type.GetPropertiesWithAttributeOfType<CompositeKeyAttribute>().Select(pi => pi.Name).ToList();
-            Args.ThrowIf(props.Count == 0, "No properties adorned with CompositeKeyAttribute defined on type ({0})", type.Name);
+            Args.ThrowIf(props.Count == 0, $"No properties adorned with {nameof(CompositeKeyAttribute)} defined on type ({0})", type.Name);
             props.Sort();
             return props.ToArray();
         }

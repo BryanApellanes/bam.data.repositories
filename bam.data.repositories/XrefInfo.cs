@@ -12,7 +12,7 @@ namespace Bam.Data.Repositories
 			Args.ThrowIfNull(left, "left");
 			Args.ThrowIfNull(right, "right");
 
-			this.LeftType = left.GetType().AssemblyQualifiedName;
+            this.LeftType = left.GetType().AssemblyQualifiedName;
 			this.RightType = right.GetType().AssemblyQualifiedName;
 			this.LeftHash = leftHash;
 			this.RightHash = rightHash;
