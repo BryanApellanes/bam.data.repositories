@@ -12,16 +12,16 @@ namespace Bam.Data.Repositories
 			Args.ThrowIfNull(left, "left");
 			Args.ThrowIfNull(right, "right");
 
-            this.LeftType = left.GetType().AssemblyQualifiedName;
-			this.RightType = right.GetType().AssemblyQualifiedName;
+            this.LeftType = left.GetType().AssemblyQualifiedName!;
+			this.RightType = right.GetType().AssemblyQualifiedName!;
 			this.LeftHash = leftHash;
 			this.RightHash = rightHash;
 		}
 
 		public ulong Id { get; set; }
-		public string Uuid { get; set; }
+		public string Uuid { get; set; } = null!;
 
-		string _leftTypeName;
+		string _leftTypeName = null!;
 		public string LeftType
 		{
 			get
@@ -34,7 +34,7 @@ namespace Bam.Data.Repositories
 			}
 		}
 		
-		string _rightTypeName;
+		string _rightTypeName = null!;
 		public string RightType
 		{
 			get
@@ -62,8 +62,8 @@ namespace Bam.Data.Repositories
 
 		public Xref Load(IObjectPersister objectLoader)
 		{
-			object left = objectLoader.ReadByHash(Type.GetType(LeftType), LeftHash);
-			object right = objectLoader.ReadByHash(Type.GetType(RightType), RightHash);
+			object left = objectLoader.ReadByHash(Type.GetType(LeftType)!, LeftHash);
+			object right = objectLoader.ReadByHash(Type.GetType(RightType)!, RightHash);
 			return new Xref(left, right);
 		}
 	}

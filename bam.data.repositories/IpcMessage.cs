@@ -29,9 +29,9 @@ namespace Bam
             this.RootDirectory = rootDir ?? RuntimeSettings.ProcessDataFolder;
         }
 
-        public static void Delete(string name, Type type, string rootDir = null)
+        public static void Delete(string name, Type type, string? rootDir = null)
         {
-            IpcMessage toDelete = new IpcMessage(name, type, rootDir);
+            IpcMessage toDelete = new IpcMessage(name, type, rootDir!);
             if (Directory.Exists(toDelete.RootDirectory))
             {
                 Directory.Delete(toDelete.RootDirectory, true);
@@ -78,7 +78,7 @@ namespace Bam
                 return ReadFile.DecodeFromFile<T>();//ReadFile.FromBinaryFile<T>();
             }
 
-            return default(T);
+            return default(T)!;
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace Bam
             set;
         }
 
-        string _rootDirectory;
+        string _rootDirectory = null!;
         object _rootDirectoryLock = new object();
         protected internal string RootDirectory
         {
@@ -128,7 +128,7 @@ namespace Bam
         }
 
         //[Verbosity(VerbosityLevel.Warning, SenderMessageFormat="{Name}:Unable to acquire lock:{LastExceptionMessage}")]
-        public event EventHandler AcquireLockException;
+        public event EventHandler AcquireLockException = null!;
       
         protected void OnAcquireLockException(Exception ex)
         {
@@ -140,22 +140,22 @@ namespace Bam
         }
 
 		//[Verbosity(VerbosityLevel.Warning, SenderMessageFormat = "PID {CurrentLockerId} has lock on {Name}")]
-        public event EventHandler WaitingForLock;
+        public event EventHandler WaitingForLock = null!;
 
         protected void OnWaitingForLock()
         {
             WaitingForLock?.Invoke(this, new EventArgs());
         }
                 
-        public string LastExceptionMessage { get; set; }
+        public string LastExceptionMessage { get; set; } = null!;
 
         /// <summary>
-        /// Gets the process id of the process who has 
+        /// Gets the process id of the process who has
         /// the lock
         /// </summary>
-        public string CurrentLockerId { get; set; }
+        public string CurrentLockerId { get; set; } = null!;
 
-        public string CurrentLockerMachineName { get; set; }
+        public string CurrentLockerMachineName { get; set; } = null!;
 
         protected string LockFile => Path.Combine(RootDirectory, "{0}.lock".Format(Name));
 
@@ -193,8 +193,8 @@ namespace Bam
                             {
                                 logged = true;
                                 IpcMessageLockInfo currentLockInfo = LockFile.DecodeFromFile<IpcMessageLockInfo>();// LockFile.FromBinaryFile<IpcMessageLockInfo>();
-                                CurrentLockerId = currentLockInfo?.ProcessId.ToString();
-                                CurrentLockerMachineName = currentLockInfo?.MachineName;
+                                CurrentLockerId = currentLockInfo?.ProcessId.ToString()!;
+                                CurrentLockerMachineName = currentLockInfo?.MachineName!;
                                 OnWaitingForLock();
                             }
 

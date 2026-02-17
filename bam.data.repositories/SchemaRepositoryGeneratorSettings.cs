@@ -14,7 +14,7 @@ namespace Bam.Data.Repositories
         public IDaoCodeWriter DaoCodeWriter { get; set; }
         public IDaoTargetStreamResolver DaoTargetStreamResolver { get; set; }
         public IWrapperGenerator WrapperGenerator { get; set; }
-        public IDaoRepoGenerationConfig DaoRepoGenerationConfig { get; set; }
+        public IDaoRepoGenerationConfig DaoRepoGenerationConfig { get; set; } = null!;
 
     }
 }

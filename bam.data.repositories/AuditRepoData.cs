@@ -19,8 +19,8 @@ namespace Bam.Data.Repositories
             Created = DateTime.UtcNow;
         }
         
-        public string CreatedBy { get; set; }		
-        public string ModifiedBy { get; set; }
+        public string CreatedBy { get; set; } = null!;
+        public string ModifiedBy { get; set; } = null!;
         public DateTime? Modified { get; set; }
         public DateTime? Deleted { get; set; }
 
@@ -37,17 +37,17 @@ namespace Bam.Data.Repositories
         /// <param name="modifiedBy"></param>
         /// <param name="propertyNames"></param>
         /// <returns></returns>
-        public new T EnsureSingle<T>(IRepository repo, string modifiedBy, params string[] propertyNames)  where T: class, new()
+        public T EnsureSingle<T>(IRepository repo, string modifiedBy, params string[] propertyNames)  where T: class, new()
         {
-            T instance = QueryFirstOrDefault<T>(repo, propertyNames);
+            T instance = QueryFirstOrDefault<T>(repo, propertyNames)!;
             if (instance == null) // wasn't saved/found, should reset Id so the repo will Create
             {
                 Id = 0;
                 ModifiedBy = modifiedBy;
                 Modified = DateTime.UtcNow;
-                instance = repo.Save(this as T);
+                instance = repo.Save(this as T)!;
             }
-            return instance;
+            return instance!;
         }
 	}
 }

@@ -25,6 +25,7 @@ namespace Bam.Data.Repositories
 	    {
 		    Database = DataSourceProvider.Current.GetSysDatabaseFor(this);
 		    SchemaProvider = new SchemaProvider();
+		    TypeToDaoGenerator = null!;
 	    }
 
 	    public DaoRepository(ISchemaProvider schemaProvider, IDaoGenerator daoGenerator, IWrapperGenerator wrapperGenerator)
@@ -45,7 +46,7 @@ namespace Bam.Data.Repositories
             this.WarningsAsErrors = true;
 
             this.Database = DataSourceProvider.Current.GetSysDatabaseFor(this);
-            this.Logger = Log.Default;
+            this.Logger = Log.Default!;
         }
 
         public DaoRepository(ISchemaProvider schemaProvider, IDaoGenerator daoGenerator, IWrapperGenerator wrapperGenerator, IDatabase? database, ILogger? logger)
@@ -53,7 +54,7 @@ namespace Bam.Data.Repositories
         {
             this.Database = database ?? DataSourceProvider.Current.GetSysDatabaseFor(this);
             this.Logger = logger ?? Log.Default;
-            this.Subscribe(Logger);
+            this.Subscribe(Logger!);
         }
 
         protected TypeToDaoGenerator TypeToDaoGenerator
@@ -66,7 +67,7 @@ namespace Bam.Data.Repositories
             get; set;
         }
 
-        private string _daoNamespace;
+        private string _daoNamespace = null!;
         /// <summary>
         /// The namespace to place generated classes into
         /// </summary>
@@ -94,10 +95,10 @@ namespace Bam.Data.Repositories
             }
         }
 
-        string _baseNamespace;
+        string _baseNamespace = null!;
 
         /// <summary>
-        /// The namespace containing POCO types to generate dao types for.  Setting 
+        /// The namespace containing POCO types to generate dao types for.  Setting
         /// the BaseNamespace also sets the DaoNamespace
         /// and WrapperNamespace.
         /// </summary>
@@ -114,7 +115,7 @@ namespace Bam.Data.Repositories
             }
         }
 
-        private string _wrapperNamespace;
+        private string _wrapperNamespace = null!;
         public string WrapperNamespace
         {
 	        get
@@ -156,7 +157,7 @@ namespace Bam.Data.Repositories
             set => TypeToDaoGenerator.TypeSchemaTempPathProvider = value;
         }
 
-        private string _schemaName;
+        private string _schemaName = null!;
         public string SchemaName
         {
 	        get
@@ -198,11 +199,11 @@ namespace Bam.Data.Repositories
 		public IDatabase Database { get; set; }
 
 		[Verbosity(VerbosityLevel.Information)]
-		public event EventHandler GenerateDaoAssemblySucceeded;		
+		public event EventHandler GenerateDaoAssemblySucceeded = null!;
 
 		public IDaoSchemaDefinition SchemaDefinition => TypeToDaoGenerator.DaoSchemaDefinitionCreateResult.DaoSchemaDefinition;
 
-		TypeSchema _typeSchema;
+		TypeSchema _typeSchema = null!;
 		public ITypeSchema TypeSchema
 		{
 			get
@@ -210,22 +211,22 @@ namespace Bam.Data.Repositories
                 if(_typeSchema == null)
                 {
                     Initialize();
-                    _typeSchema = SchemaProvider?.CreateTypeSchema(StorableTypes, SchemaName);
+                    _typeSchema = SchemaProvider?.CreateTypeSchema(StorableTypes, SchemaName)!;
                 }
-                return _typeSchema;
+                return _typeSchema!;
 			}
 		}
 
         [Verbosity(VerbosityLevel.Warning, SenderMessageFormat = "Missing {PropertyType} property: {ClassName}.{PropertyName}")]
-        public event EventHandler SchemaWarning;
+        public event EventHandler SchemaWarning = null!;
 
-        Assembly? _daoAssembly;
+        Assembly? _daoAssembly = null;
         /// <summary>
         /// The assembly to look for Dao definitions in.
         /// This may or may not be generated and can be
         /// user/developer specified.
         /// </summary>
-        public Assembly? DaoAssembly
+        public Assembly DaoAssembly
         {
             get => _daoAssembly;
             set
@@ -268,7 +269,7 @@ namespace Bam.Data.Repositories
             return _daoAssembly;
         }
 
-        public sealed override void Subscribe(ILogger logger)
+        public sealed override void Subscribe(ILogger? logger)
         {
             TypeToDaoGenerator.Subscribe(logger);
             SchemaProvider.Subscribe(logger);
@@ -412,7 +413,7 @@ namespace Bam.Data.Repositories
 			{
 				LastException = ex;
 				OnCreateFailed(new RepositoryEventArgs(ex));
-				return null;
+				return null!;
 			}
 		}
 
@@ -423,15 +424,15 @@ namespace Bam.Data.Repositories
 
 		public override T Retrieve<T>(long id)
 		{
-			return (T)Retrieve(typeof(T), id);
+			return (T)Retrieve(typeof(T), id)!;
 		}
-        
+
         public override T Retrieve<T>(ulong id)
         {
-            return (T)Retrieve(typeof(T), id);
+            return (T)Retrieve(typeof(T), id)!;
         }
 
-        public override object? Retrieve(Type objectType, long id)
+        public override object Retrieve(Type objectType, long id)
         {
             try
             {
@@ -441,17 +442,17 @@ namespace Bam.Data.Repositories
                 {
                     return CreateWrapperCopy(objectType, daoInstance);
                 }
-                return null;
+                return null!;
             }
             catch (Exception ex)
             {
                 LastException = ex;
                 OnRetrieveFailed(new RepositoryEventArgs(ex));
-                return null;
+                return null!;
             }
         }
 
-        public override object? Retrieve(Type objectType, ulong id)
+        public override object Retrieve(Type objectType, ulong id)
 		{
 			try
 			{
@@ -461,13 +462,13 @@ namespace Bam.Data.Repositories
 				{
 					return CreateWrapperCopy(objectType, daoInstance);
 				}
-				return null;
+				return null!;
 			}
 			catch (Exception ex)
 			{
 				LastException = ex;
 				OnRetrieveFailed(new RepositoryEventArgs(ex));
-				return null;
+				return null!;
 			}
 		}
 
@@ -479,7 +480,7 @@ namespace Bam.Data.Repositories
         /// <returns></returns>
         public override T Retrieve<T>(string uuid)
         {
-            return (T)Retrieve(typeof(T), uuid);
+            return (T)Retrieve(typeof(T), uuid)!;
         }
 
         /// <summary>
@@ -488,7 +489,7 @@ namespace Bam.Data.Repositories
         /// <param name="objectType">The type.</param>
         /// <param name="uuid">The universally unique identifier.</param>
         /// <returns>The result.</returns>
-		public override object? Retrieve(Type objectType, string uuid)
+		public override object Retrieve(Type objectType, string uuid)
 		{
 			try
 			{
@@ -498,13 +499,13 @@ namespace Bam.Data.Repositories
 				{
 					return CreateWrapperCopy(objectType, daoInstance);
 				}
-				return null;
+				return null!;
 			}
 			catch (Exception ex)
 			{
 				LastException = ex;
 				OnRetrieveFailed(new RepositoryEventArgs(ex));
-				return null;
+				return null!;
 			}
 		}
 
@@ -530,8 +531,8 @@ namespace Bam.Data.Repositories
 
             Type pocoType = GetBaseType(dtoOrPocoType);
             Type daoType = GetDaoType(pocoType);
-            MethodInfo getterMethod = daoType.GetMethod("LoadAll", new Type[] { typeof(Database) });
-            return new List<object>((IEnumerable<object>)getterMethod.Invoke(null, new object[] { Database }));
+            MethodInfo getterMethod = daoType.GetMethod("LoadAll", new Type[] { typeof(Database) })!;
+            return new List<object>((IEnumerable<object>)getterMethod!.Invoke(null, new object[] { Database })!);
         }
 
         /// <summary>
@@ -546,8 +547,8 @@ namespace Bam.Data.Repositories
 
             Type pocoType = GetBaseType(dtoOrPocoType);
             Type daoType = GetDaoType(pocoType);
-            MethodInfo getterMethod = daoType.GetMethod("BatchAll", new Type[] { typeof(Database) });
-            getterMethod.Invoke(null, new object[] { batchSize, processor, Database });
+            MethodInfo getterMethod = daoType.GetMethod("BatchAll", new Type[] { typeof(Database) })!;
+            getterMethod!.Invoke(null, new object[] { batchSize, processor, Database });
         }
 
         /// <summary>
@@ -636,9 +637,9 @@ namespace Bam.Data.Repositories
         /// <typeparam name="T">The type.</typeparam>
         /// <param name="toUpdate">The object instance to update.</param>
         /// <returns>The updated object instance.</returns>
-        public override T Update<T>(T toUpdate)
+        public override T Update<T>(T? toUpdate)
 		{
-			return (T)Update((object)toUpdate);
+			return (T)Update((object)toUpdate!)!;
 		}
 
         /// <summary>
@@ -662,14 +663,14 @@ namespace Bam.Data.Repositories
 			try
 			{
 				Initialize();
-				Dao daoInstance = GetDaoInstanceById(type, GetIdValue(toUpdate).Value); 
+				Dao daoInstance = GetDaoInstanceById(type, GetIdValue(toUpdate)!.Value);
 				return SaveDaoInstanceProperties(toUpdate, daoInstance);
 			}
 			catch (Exception ex)
 			{
 				LastException = ex;
 				OnUpdateFailed(new RepositoryEventArgs(ex));
-				return null;
+				return null!;
 			}
 		}
 
@@ -681,7 +682,7 @@ namespace Bam.Data.Repositories
         /// <returns>A value that indicates whether the operation succeeded.</returns>
 		public override bool Delete<T>(T toDelete)
 		{
-			return Delete((object)toDelete);
+			return Delete((object)toDelete!);
 		}
 
         /// <summary>
@@ -705,12 +706,12 @@ namespace Bam.Data.Repositories
 			try
 			{
 				Initialize();
-                ulong id = GetIdValue(toDelete).Value;
+                ulong id = GetIdValue(toDelete)!.Value;
                 object daoInstance = GetDaoInstanceById(type, id);
 				if (daoInstance != null)
 				{
-					MethodInfo deleteMethod = daoInstance.GetType().GetMethod("Delete", new Type[] { typeof(Database) });
-					deleteMethod.Invoke(daoInstance, new object[] { Database });
+					MethodInfo deleteMethod = daoInstance.GetType().GetMethod("Delete", new Type[] { typeof(Database) })!;
+					deleteMethod!.Invoke(daoInstance, new object[] { Database });
 					return true;
 				}
                 throw new InstanceNotFoundException(type, id);
@@ -776,15 +777,15 @@ namespace Bam.Data.Repositories
                 return new List<object>();
             }
             MethodInfo? whereMethod = daoType.GetMethod("Where", new Type[] { typeof(QueryFilter), typeof(Database) });
-            IEnumerable daoResults = (IEnumerable)whereMethod.Invoke(null, new object[] { query, Database });
+            IEnumerable daoResults = (IEnumerable)whereMethod!.Invoke(null, new object[] { query, Database })!;
             if (wrap)
             {
-                object[] results = Wrap(pocoType, daoResults).ToArray();
+                object[] results = Wrap(pocoType, daoResults!).ToArray();
                 return results;
             }
             else
             {
-                object[] results = daoResults.CopyAs(pocoType).ToArray();
+                object[] results = daoResults!.CopyAs(pocoType).ToArray();
                 return results;
             }
         }
@@ -798,7 +799,7 @@ namespace Bam.Data.Repositories
         /// <returns></returns>
         public T First<T>(IQueryFilter query) where T: new()
         {
-            return Top<T>(1, query).FirstOrDefault();
+            return Top<T>(1, query).FirstOrDefault()!;
         }
 
         /// <summary>
@@ -835,7 +836,7 @@ namespace Bam.Data.Repositories
         /// <returns>IEnumerable</returns>
         public IEnumerable Top(int count, Type pocoType, IQueryFilter query)
         {
-            return Top(count, pocoType, query, null, SortOrder.Ascending, WrapByDefault);
+            return Top(count, pocoType, query, null!, SortOrder.Ascending, WrapByDefault);
         }
 
         /// <summary>
@@ -878,16 +879,16 @@ namespace Bam.Data.Repositories
         public IEnumerable Top(int count, Type pocoType, IQueryFilter query, string sortByColumn, SortOrder sortOrder, bool wrap)
         {
             Type daoType = GetDaoType(pocoType);
-            MethodInfo topMethod = daoType.GetMethod("Top", new Type[] { typeof(int), typeof(QueryFilter), typeof(string), typeof(SortOrder), typeof(Database) });
-            IEnumerable daoResults = (IEnumerable)topMethod.Invoke(null, new object[] { count, query, sortByColumn, sortOrder, Database });
+            MethodInfo topMethod = daoType.GetMethod("Top", new Type[] { typeof(int), typeof(QueryFilter), typeof(string), typeof(SortOrder), typeof(Database) })!;
+            IEnumerable daoResults = (IEnumerable)topMethod!.Invoke(null, new object[] { count, query, sortByColumn, sortOrder, Database })!;
             if (wrap)
             {
-                object[] results = Wrap(pocoType, daoResults).ToArray();
+                object[] results = Wrap(pocoType, daoResults!).ToArray();
                 return results;
             }
             else
             {
-                object[] results = daoResults.CopyAs(pocoType).ToArray();
+                object[] results = daoResults!.CopyAs(pocoType).ToArray();
                 return results;
             }
         }
@@ -913,16 +914,16 @@ namespace Bam.Data.Repositories
                     Assembly daoAssembly = EnsureDaoAssemblyAndSchema();
                     Type baseType = GetBaseType(pocoType);
                     
-                    Type daoType = daoAssembly.GetType("{0}.{1}".Format(DaoNamespace, baseType.Name));
+                    Type daoType = daoAssembly.GetType("{0}.{1}".Format(DaoNamespace, baseType.Name))!;
                     if (daoType == null)
                     {
                         Type[] daoTypes = daoAssembly.GetTypes().Where(t => t.Name.Equals(baseType.Name) && t.IsSubclassOf(typeof(Dao))).ToArray();
-                        Type first = daoTypes.FirstOrDefault();
+                        Type first = daoTypes.FirstOrDefault()!;
                         if(daoTypes.Length > 1)
                         {
-                            Logger.Warning("Multiple dao types found for poco type ({0}), using ({1}): {3}", pocoType.FullName, first.FullName, string.Join(",", daoTypes.Select(t => t.FullName).ToArray()));
+                            Logger.Warning("Multiple dao types found for poco type ({0}), using ({1}): {3}", pocoType.FullName!, first!.FullName!, string.Join(",", daoTypes.Select(t => t.FullName).ToArray()));
                         }
-                        daoType = first;
+                        daoType = first!;
                     }
 
                     if (daoType == null)
@@ -934,13 +935,13 @@ namespace Bam.Data.Repositories
                         _daoTypeLookup.Set(pocoType, daoType);
                     }
 
-                    return daoType;
+                    return daoType!;
                 }
             }
 		}
-        
+
         /// <summary>
-        /// Get the wrapper type for the specified developer defined 
+        /// Get the wrapper type for the specified developer defined
         /// dto of type T
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -961,11 +962,11 @@ namespace Bam.Data.Repositories
 		{
 			if (baseOrWrapperType == null || baseOrWrapperType.Name.EndsWith("Wrapper"))
 			{
-				return baseOrWrapperType;
+				return baseOrWrapperType!;
 			}
 
 			Type daoType = GetDaoType(baseOrWrapperType);
-			Type dto = daoType.Assembly.GetType("{0}.{1}Wrapper".Format(WrapperNamespace, baseOrWrapperType.Name));
+			Type dto = daoType.Assembly.GetType("{0}.{1}Wrapper".Format(WrapperNamespace, baseOrWrapperType.Name))!;
 			Type result = dto ?? baseOrWrapperType;
 			return result;
 		}
@@ -1021,7 +1022,7 @@ namespace Bam.Data.Repositories
         /// <returns></returns>
         public T Wrap<T>(T baseInstance)
         {
-            return (T)Wrap(typeof(T), baseInstance);
+            return (T)Wrap(typeof(T), baseInstance!);
         }
 
         /// <summary>
@@ -1048,19 +1049,19 @@ namespace Bam.Data.Repositories
 		public object ConstructWrapper(Type baseType)
 		{
             Type wrapperType = GetWrapperType(baseType);
-			ConstructorInfo ctor = wrapperType.GetConstructor(new Type[] { typeof(DaoRepository) });
+			ConstructorInfo ctor = wrapperType.GetConstructor(new Type[] { typeof(DaoRepository) })!;
             object result;
 			if (ctor == null)
 			{
-				ctor = wrapperType.GetConstructor(Type.EmptyTypes);
+				ctor = wrapperType.GetConstructor(Type.EmptyTypes)!;
 				if (ctor == null)
 				{
 					Args.Throw<InvalidOperationException>(
 						"The specified type {0} doesn't have a parameterless constructor and no constructor taking a single parameter of type {1}",
-						baseType.FullName, typeof(DaoRepository).FullName);
+						baseType.FullName!, typeof(DaoRepository).FullName!);
 				}
 
-				result = ctor.Invoke(new object[] { });
+				result = ctor!.Invoke(new object[] { });
 			}
 			else
 			{
@@ -1077,7 +1078,7 @@ namespace Bam.Data.Repositories
         /// <returns></returns>
 		public IDao GetDaoInstance(object poco) // required by generated code
 		{
-			ulong id = GetIdValue(poco).Value;
+			ulong id = GetIdValue(poco)!.Value;
 			Dao dao = GetDaoInstanceById(poco.GetType(), id);
 			return dao;
 		}
@@ -1095,8 +1096,8 @@ namespace Bam.Data.Repositories
 			foreach (TypeFk fkDescriptor in fkDescriptors)
 			{
 				PropertyInfo childCollectionDaoProperty = GetChildCollectionDaoPropertyForTypeFk(fkDescriptor);
-				IEnumerable values = (IEnumerable)fkDescriptor.CollectionProperty.GetValue(poco) ?? new object[] { };
-				IAddable daoCollection = (IAddable)childCollectionDaoProperty.GetValue(daoInstance);
+				IEnumerable values = (IEnumerable)fkDescriptor.CollectionProperty.GetValue(poco)! ?? new object[] { };
+				IAddable daoCollection = (IAddable)childCollectionDaoProperty.GetValue(daoInstance)!;
 				foreach (object o in values)
 				{
                     // TODO: define IMetaProvider and inject; extract this code
@@ -1127,15 +1128,15 @@ namespace Bam.Data.Repositories
             foreach (TypeFk fkDescriptor in fkDescriptors)
             {
                 Type arrayOrListType = fkDescriptor.CollectionProperty.PropertyType;
-                PropertyInfo childCollectionDaoProperty = GetChildCollectionDaoPropertyForTypeFk(fkDescriptor);                
-                IEnumerable daoCollection = (IEnumerable)childCollectionDaoProperty.GetValue(daoInstance);
+                PropertyInfo childCollectionDaoProperty = GetChildCollectionDaoPropertyForTypeFk(fkDescriptor);
+                IEnumerable daoCollection = (IEnumerable)childCollectionDaoProperty.GetValue(daoInstance)!;
                 if(!arrayOrListType.IsArray && arrayOrListType.IsEnumerable())
                 {
-                    SetPocoListFromDaoCollection(fkDescriptor, poco, daoCollection);
+                    SetPocoListFromDaoCollection(fkDescriptor, poco, daoCollection!);
                 }
                 else
                 {
-                    SetPocoArrayFromDaoCollection(fkDescriptor, poco, daoCollection);
+                    SetPocoArrayFromDaoCollection(fkDescriptor, poco, daoCollection!);
                 }
 
             }
@@ -1182,7 +1183,7 @@ namespace Bam.Data.Repositories
 				{
 					PropertyInfo? daoXrefProperty = daoType.GetProperty(daoXrefPropertyName);
 					PropertyInfo pocoXrefProperty = leftXref.RightCollectionProperty;
-					bool valuesWereSet = SetDaoXrefCollectionValues(pocoWrapper, daoInstance, daoXrefProperty, pocoXrefProperty);
+					bool valuesWereSet = SetDaoXrefCollectionValues(pocoWrapper, daoInstance, daoXrefProperty!, pocoXrefProperty);
 					if(result == false && valuesWereSet)
                     {
                         result = true;
@@ -1196,9 +1197,9 @@ namespace Bam.Data.Repositories
 				string daoXrefPropertyName = "{0}".Format(rightXref.Left.Name).Pluralize();
 				if (!handledProperties.Contains(daoXrefPropertyName))
 				{
-					PropertyInfo daoXrefProperty = daoType.GetProperty(daoXrefPropertyName);
+					PropertyInfo daoXrefProperty = daoType.GetProperty(daoXrefPropertyName)!;
 					PropertyInfo pocoProperty = rightXref.LeftCollectionProperty;
-					bool valuesWereSet = SetDaoXrefCollectionValues(pocoWrapper, daoInstance, daoXrefProperty, pocoProperty);
+					bool valuesWereSet = SetDaoXrefCollectionValues(pocoWrapper, daoInstance, daoXrefProperty!, pocoProperty);
 					if(result == false && valuesWereSet)
                     {
                         result = true;
@@ -1240,7 +1241,7 @@ namespace Bam.Data.Repositories
                 string daoXrefPropertyName = leftXref.Right.Name.Pluralize();
                 if (!handledProperties.Contains(daoXrefPropertyName))
                 {
-                    PropertyInfo daoXrefProperty = daoType.GetProperty(daoXrefPropertyName);
+                    PropertyInfo daoXrefProperty = daoType.GetProperty(daoXrefPropertyName)!;
                     PropertyInfo pocoXrefProperty = leftXref.RightCollectionProperty;
                     if(daoXrefProperty != null && pocoXrefProperty != null)
                     {
@@ -1256,7 +1257,7 @@ namespace Bam.Data.Repositories
                 string daoXrefPropertyName = rightXref.Left.Name.Pluralize();
                 if (!handledProperties.Contains(daoXrefPropertyName))
                 {
-                    PropertyInfo daoXrefProperty = daoType.GetProperty(daoXrefPropertyName);
+                    PropertyInfo daoXrefProperty = daoType.GetProperty(daoXrefPropertyName)!;
                     PropertyInfo pocoXrefProperty = rightXref.LeftCollectionProperty;
                     if(daoXrefProperty != null && pocoXrefProperty != null)
                     {
@@ -1286,10 +1287,10 @@ namespace Bam.Data.Repositories
 			Type pocoType = GetBaseType(pocoInstance.GetType());
 			foreach (TypeFk typeFk in TypeSchema.ForeignKeys.Where(fk => fk.ForeignKeyType == pocoType))
 			{
-				PropertyInfo parentInstanceProperty = pocoType.GetProperty(typeFk.PrimaryKeyType.Name);
-				if (parentInstanceProperty != null && !parentInstanceProperty.GetGetMethod().IsVirtual)
+				PropertyInfo parentInstanceProperty = pocoType.GetProperty(typeFk.PrimaryKeyType.Name)!;
+				if (parentInstanceProperty != null && !parentInstanceProperty.GetGetMethod()!.IsVirtual)
 				{
-					object value = GetParentPropertyOfChild(pocoInstance, typeFk.PrimaryKeyType);
+					object value = GetParentPropertyOfChild(pocoInstance, typeFk.PrimaryKeyType)!;
 					parentInstanceProperty.SetValue(pocoInstance, value);
 				}
 			}
@@ -1308,10 +1309,10 @@ namespace Bam.Data.Repositories
 			if (dtoType != null)
 			{
 				string primaryIdPropertyName = "{0}Id".Format(parentType.Name);
-				PropertyInfo primaryIdProperty = dtoType.GetProperty(primaryIdPropertyName);
+				PropertyInfo primaryIdProperty = dtoType.GetProperty(primaryIdPropertyName)!;
 				if (primaryIdProperty != null)
 				{
-					ulong idValue = (ulong)primaryIdProperty.GetValue(pocoChild);
+					ulong idValue = (ulong)primaryIdProperty.GetValue(pocoChild)!;
 					object parentDaoInstance = GetDaoInstanceById(parentType, idValue);
 					if (parentDaoInstance != null)
 					{
@@ -1344,7 +1345,7 @@ namespace Bam.Data.Repositories
 			// ParentType.Name Of ForeignKeyProperty.Name
 			Type foreignKeyDaoType = GetDaoType(typeFk.ForeignKeyType);
 			string propertyName = string.Format("{0}Of{1}", foreignKeyDaoType.Name, typeFk.ForeignKeyProperty.Name);
-			PropertyInfo parentPropertyOfChildForTypeFk = foreignKeyDaoType.GetProperty(propertyName);
+			PropertyInfo parentPropertyOfChildForTypeFk = foreignKeyDaoType.GetProperty(propertyName)!;
 			return parentPropertyOfChildForTypeFk;
 		}
 
@@ -1359,7 +1360,7 @@ namespace Bam.Data.Repositories
 			Type primaryDaoType = GetDaoType(typeFk.PrimaryKeyType);
 			Type foreignKeyDaoType = GetDaoType(typeFk.ForeignKeyType);
 			string propertyName = string.Format("{0}By{1}", foreignKeyDaoType.Name.Pluralize(), typeFk.ForeignKeyProperty.Name);
-			PropertyInfo childCollectionPropertyForTypeFk = primaryDaoType.GetProperty(propertyName);
+			PropertyInfo childCollectionPropertyForTypeFk = primaryDaoType.GetProperty(propertyName)!;
 			return childCollectionPropertyForTypeFk;
 		}
 
@@ -1389,7 +1390,7 @@ namespace Bam.Data.Repositories
             }
             else
             {
-                Logger.Info("'Save' method was not found on type ({0})", dtoOrPocoType?.FullName);
+                Logger.Info("'Save' method was not found on type ({0})", dtoOrPocoType?.FullName!);
             }
 		}
 
@@ -1437,7 +1438,7 @@ namespace Bam.Data.Repositories
         {
             List<TChildType> results = new List<TChildType>();
             string foreignKeyName = fkDescriptor.ForeignKeyProperty.Name;
-            ulong parentId = GetIdValue(poco).Value;
+            ulong parentId = GetIdValue(poco)!.Value;
             if (parentId <= 0)
             {
 	            // this may be a create operation, which means that there is no parent id yet
@@ -1447,10 +1448,10 @@ namespace Bam.Data.Repositories
             // potentially extract this into a separate ForeignKeyCollectionLoader implementation
             QueryFilter filter = Bam.Data.Query.Where(foreignKeyName) == Dao.MapUlongToLong(parentId);
             Type childDaoType = GetDaoType(typeof(TChildType));
-            MethodInfo whereMethod = childDaoType.GetMethod("Where", new Type[] { typeof(QueryFilter), typeof(IDatabase) });
-            IEnumerable daoResults = (IEnumerable)whereMethod.Invoke(null, new object[] { filter, Database });
+            MethodInfo whereMethod = childDaoType.GetMethod("Where", new Type[] { typeof(QueryFilter), typeof(IDatabase) })!;
+            IEnumerable daoResults = (IEnumerable)whereMethod!.Invoke(null, new object[] { filter, Database })!;
 
-            foreach (object dao in daoResults)
+            foreach (object dao in daoResults!)
             {
                 Type wrapperType = GetWrapperType<TChildType>();
                 TChildType value = wrapperType.Construct<TChildType>(this);
@@ -1470,11 +1471,11 @@ namespace Bam.Data.Repositories
         {
             Type pocoType = GetBaseType(baseOrWrapperType);
             Type daoType = GetDaoType(pocoType);
-            MethodInfo getterMethod = daoType.GetMethod(methodName, new Type[] { parameter.GetType(), typeof(Database) });
-            object daoResult = getterMethod.Invoke(null, new object[] { parameter, Database });
+            MethodInfo getterMethod = daoType.GetMethod(methodName, new Type[] { parameter.GetType(), typeof(Database) })!;
+            object daoResult = getterMethod.Invoke(null, new object[] { parameter, Database })!;
             if (daoResult == null)
             {
-                return null;
+                return null!;
             }
             return (Dao)daoResult;
         }
@@ -1482,11 +1483,11 @@ namespace Bam.Data.Repositories
         private bool SetDaoXrefCollectionValues(object poco, IDao daoInstance, PropertyInfo daoXrefProperty, PropertyInfo pocoXrefProperty)
         {
             bool result = false;
-            IEnumerable values = (IEnumerable)pocoXrefProperty.GetValue(poco);
+            IEnumerable values = (IEnumerable)pocoXrefProperty.GetValue(poco)!;
             if (values != null)
             {
-                IAddable daoXrefCollection = (IAddable)daoXrefProperty.GetValue(daoInstance);
-                daoXrefCollection.Clear(daoInstance.Database);
+                IAddable daoXrefCollection = (IAddable)daoXrefProperty.GetValue(daoInstance)!;
+                daoXrefCollection!.Clear(daoInstance.Database);
                 foreach (object o in values)
                 {
                     Meta.SetUuid(o);
@@ -1538,7 +1539,7 @@ namespace Bam.Data.Repositories
             Type? itemType = pocoXrefProperty.GetEnumerableType();
             foreach (object dao in daos)
             {
-                object item = itemType.Construct();
+                object item = itemType!.Construct();
                 item.CopyProperties(dao);
                 list.Add(item);
             }
@@ -1620,17 +1621,17 @@ namespace Bam.Data.Repositories
 
         private static void LogAndThrow(Exception ex, ILogger logger)
         {
-            logger = logger ?? Log.Default;
+            logger = logger ?? Log.Default!;
             string message = ex.Message;
             string innerMessage = "NA";
             string signature = "ExceptionMessage::{0}::InnerExceptionMessage::{1}";
-            Exception e = ex;            
+            Exception e = ex;
             if(ex.InnerException != null)
             {
                 e = ex.InnerException;
                 innerMessage = ex.InnerException.Message;
             }
-            logger.AddEntry(signature, e, message, innerMessage);
+            logger!.AddEntry(signature, e, message, innerMessage);
         }
     }
 }

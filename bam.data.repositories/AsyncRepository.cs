@@ -79,7 +79,7 @@
 
         public Task<object> SaveAsync(object instance)
         {
-            return Task.Run(() => Save(instance));
+            return Task.Run(() => Save(instance))!;
         }
 
         public new Task<T> SaveAsync<T>(T instance) where T : class, new()

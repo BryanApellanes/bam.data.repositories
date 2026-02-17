@@ -58,9 +58,9 @@ namespace Bam.Data.Repositories
         {
             Type daoType = GetDaoType(dcp);
             IDatabase database = dcp.DaoProxyRegistration.Database;
-            MethodInfo daoMethod = daoType.GetMethod("Insert");
+            MethodInfo daoMethod = daoType.GetMethod("Insert")!;
             object instance = GetRequestBody(HttpContext.Request).FromJson(daoType);
-            daoMethod.Invoke(instance, new object[] { database });
+            daoMethod!.Invoke(instance, new object[] { database });
             return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = instance.ColumnsToJsonSafe() };
         }
 
@@ -68,18 +68,18 @@ namespace Bam.Data.Repositories
         {
             Type daoType = GetDaoType(dcp);
             IDatabase database = dcp.DaoProxyRegistration.Database;
-            MethodInfo daoMethod = daoType.GetMethod("GetById", new Type[] { typeof(long), typeof(Database) });
+            MethodInfo daoMethod = daoType.GetMethod("GetById", new Type[] { typeof(long), typeof(Database) })!;
             long id = GetRequestBody(HttpContext.Request).FromJson<long>();
-            return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = daoMethod.Invoke(null, new object[] { id, database }).ColumnsToJsonSafe() };
+            return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = daoMethod!.Invoke(null, new object[] { id, database })!.ColumnsToJsonSafe() };
         }
 
         public CrudResponse Update(ICrudResponseProvider dcp)
         {
             Type daoType = GetDaoType(dcp);
             IDatabase database = dcp.DaoProxyRegistration.Database;
-            MethodInfo daoMethod = daoType.GetMethod("Update", new Type[] { typeof(Database) });
+            MethodInfo daoMethod = daoType.GetMethod("Update", new Type[] { typeof(Database) })!;
             object instance = GetRequestBody(HttpContext.Request).FromJson(daoType);
-            daoMethod.Invoke(instance, new object[] { database });
+            daoMethod!.Invoke(instance, new object[] { database });
             return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = instance.ColumnsToJsonSafe() };
         }
 
@@ -87,9 +87,9 @@ namespace Bam.Data.Repositories
         {
             Type daoType = GetDaoType(dcp);
             IDatabase database = dcp.DaoProxyRegistration.Database;
-            MethodInfo daoMethod = daoType.GetMethod("Delete", new Type[] { typeof(Database) });
+            MethodInfo daoMethod = daoType.GetMethod("Delete", new Type[] { typeof(Database) })!;
             object instance = GetRequestBody(HttpContext.Request).FromJson(daoType);
-            daoMethod.Invoke(instance, new object[] { database });
+            daoMethod!.Invoke(instance, new object[] { database });
             return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = instance.ColumnsToJsonSafe() };
         }
 
@@ -97,22 +97,22 @@ namespace Bam.Data.Repositories
         {
             Type daoType = GetDaoType(dcp);
             IDatabase database = dcp.DaoProxyRegistration.Database;
-            MethodInfo daoMethod = daoType.GetMethod("Where", new Type[] { typeof(QiQuery), typeof(Database)});
+            MethodInfo daoMethod = daoType.GetMethod("Where", new Type[] { typeof(QiQuery), typeof(Database)})!;
             QiQuery query = GetRequestBody(HttpContext.Request).FromJson<QiQuery>();
-            IEnumerable results = (IEnumerable)daoMethod.Invoke(null, new object[] { query, database });
-            return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = results.ToJsonSafe() };
+            IEnumerable results = (IEnumerable)daoMethod!.Invoke(null, new object[] { query, database })!;
+            return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = results!.ToJsonSafe() };
         }
 
         public CrudResponse SaveCollection(ICrudResponseProvider dcp)
         {
             Type daoType = GetDaoType(dcp);
             IDatabase database = dcp.DaoProxyRegistration.Database;
-            Type collectionType = daoType.Assembly.GetType("{0}.{1}Collection".Format(daoType.Namespace, daoType.Name));
+            Type collectionType = daoType.Assembly.GetType("{0}.{1}Collection".Format(daoType.Namespace!, daoType.Name))!;
             IEnumerable values = (IEnumerable)GetRequestBody(HttpContext.Request).FromJson(daoType.MakeArrayType());
-            object collection = collectionType.Construct();
+            object collection = collectionType!.Construct();
             collection.Invoke("AddRange", values);
-            MethodInfo saveMethod = collectionType.GetMethod("Save", new Type[] { typeof(Database) });
-            saveMethod.Invoke(collection, new object[] { database });
+            MethodInfo saveMethod = collectionType.GetMethod("Save", new Type[] { typeof(Database) })!;
+            saveMethod!.Invoke(collection, new object[] { database });
             return new CrudResponse { CxName = Dao.ConnectionName(daoType), Success = true, Dao = collection.ColumnsToJsonSafe() };
         }
 

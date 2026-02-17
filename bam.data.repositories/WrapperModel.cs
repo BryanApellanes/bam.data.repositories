@@ -21,7 +21,7 @@ namespace Bam.Data.Repositories
             RightXrefs = schema.Xrefs.Where(xref => xref.Right.Equals(pocoType)).Select(xref => TypeXrefModel.FromTypeXref(xref, daoNameSpace)).ToArray();
 		}
 
-		public ITemplateRenderer TemplateRenderer { get; set; }
+		public ITemplateRenderer TemplateRenderer { get; set; } = null!;
 
         public virtual string Render()
         {

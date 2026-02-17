@@ -20,7 +20,7 @@ namespace Bam.CoreServices.ProtoBuf
             : this(new SchemaProvider(), propertyNumberer)
         { }
 
-        public ProtoFileGenerator(ISchemaProvider schemaGenerator, IPropertyNumberer propertyNumberer, Func<PropertyInfo, bool> propertyFilter = null)
+        public ProtoFileGenerator(ISchemaProvider schemaGenerator, IPropertyNumberer propertyNumberer, Func<PropertyInfo, bool>? propertyFilter = null)
         {
             Args.ThrowIfNull(schemaGenerator);
             Args.ThrowIfNull(propertyNumberer, nameof(propertyNumberer));
@@ -31,22 +31,22 @@ namespace Bam.CoreServices.ProtoBuf
         }
 
         [Verbosity(VerbosityLevel.Warning, SenderMessageFormat = "ProtoFileDirectory:{ProtoFileDirectory}: {Message}")]
-        public event EventHandler Warning;
+        public event EventHandler Warning = null!;
 
         [Verbosity(VerbosityLevel.Information, SenderMessageFormat = "{Message}")]
-        public event EventHandler ProtoGenerationStarted;
+        public event EventHandler ProtoGenerationStarted = null!;
 
         [Verbosity(VerbosityLevel.Information, SenderMessageFormat = "{Message}")]
-        public event EventHandler ProtoGenerationComplete;
+        public event EventHandler ProtoGenerationComplete = null!;
 
         [Verbosity(VerbosityLevel.Error, SenderMessageFormat = "{Message}")]
-        public event EventHandler ProtoGenerationError;
+        public event EventHandler ProtoGenerationError = null!;
 
-        public string Message { get; set; }
+        public string Message { get; set; } = null!;
         public string OutputDirectory { get; set; }
         public Func<PropertyInfo, bool> PropertyFilter { get; set; }
         public IPropertyNumberer PropertyNumberer { get; set; }
-        public string TargetNamespace { get; set; }
+        public string TargetNamespace { get; set; } = null!;
         public void GenerateProtoFile(params Type[] clrTypes)
         {
             GenerateProtoFile(OutputDirectory, clrTypes);
@@ -56,11 +56,11 @@ namespace Bam.CoreServices.ProtoBuf
         {
             GenerateProtoFile(clrTypes, protoFileDirectory);
         }
-        public void GenerateProtoFile(IRepository repo, string protoFileDirectory = null)
+        public void GenerateProtoFile(IRepository repo, string? protoFileDirectory = null)
         {
             GenerateProtoFile(repo.StorableTypes, protoFileDirectory);
         }
-        public string GenerateProtoFile(IEnumerable<Type> clrTypes, string protoFileDirectory = null)
+        public string GenerateProtoFile(IEnumerable<Type> clrTypes, string? protoFileDirectory = null)
         {
             try
             {
@@ -116,9 +116,9 @@ namespace Bam.CoreServices.ProtoBuf
             {
                 if (string.IsNullOrEmpty(nameSpace))
                 {
-                    nameSpace = type.Namespace;
+                    nameSpace = type.Namespace!;
                 }
-                if (!nameSpace.Equals(type.Namespace))
+                if (!nameSpace.Equals(type.Namespace!))
                 {
                     Message = $"Different namespaces found, will use ({nameSpace}) (JUST FYI): \r\n\t({nameSpace})\r\n\t({type.Namespace})";
                     FireEvent(Warning);

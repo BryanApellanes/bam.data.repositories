@@ -30,7 +30,7 @@ namespace Bam.Data.Repositories
             }
         }
 
-        private TypeSchemaPropertyManager _typeSchemaPropertyManager;
+        private TypeSchemaPropertyManager _typeSchemaPropertyManager = null!;
         private readonly object _typeSchemaPropertyManagerLock = new object();
         protected TypeSchemaPropertyManager TypeSchemaPropertyManager
         {
@@ -40,7 +40,7 @@ namespace Bam.Data.Repositories
             }
         }
 
-        DaoSchemaDefinitionCreateResult _schemaDefinitionCreateResult;
+        DaoSchemaDefinitionCreateResult _schemaDefinitionCreateResult = null!;
         protected DaoSchemaDefinitionCreateResult SchemaDefinitionCreateResult
         {
             get
@@ -54,7 +54,7 @@ namespace Bam.Data.Repositories
             }                
         }
 
-        private TypeInheritanceSqlWriter _insertWriter;
+        private TypeInheritanceSqlWriter _insertWriter = null!;
         private readonly object _insertWriterLock = new object();
         public TypeInheritanceSqlWriter SqlWriter
         {
@@ -91,7 +91,7 @@ namespace Bam.Data.Repositories
         public BackgroundThreadQueue<ISqlStringBuilder> BackgroundThreadQueue
         {
             get; set;
-        }
+        } = null!;
 
         bool _ensured;
 
@@ -150,7 +150,7 @@ namespace Bam.Data.Repositories
 
         public override bool Delete<T>(T toDelete)
         {
-            return Delete((object)toDelete);
+            return Delete((object)toDelete!);
         }
 
         public override bool Delete(object toDelete)
@@ -163,15 +163,15 @@ namespace Bam.Data.Repositories
             }
             catch(Exception ex)
             {
-                string value = toDelete == null ? "null" : toDelete.ToString();
-                Logger.AddEntry("Exception occurred on delete of {0}: {1}", ex, value, ex.Message);
+                string value = toDelete == null ? "null" : toDelete.ToString()!;
+                Logger.AddEntry("Exception occurred on delete of {0}: {1}", ex, value!, ex.Message);
                 return false;
             }
         }
 
-        public override T Update<T>(T toUpdate)
+        public override T Update<T>(T? toUpdate)
         {
-            return (T)Update((object)toUpdate);
+            return (T)Update((object)toUpdate!)!;
         }
 
         public override object Update(object toUpdate)
@@ -210,7 +210,7 @@ namespace Bam.Data.Repositories
             Database.ExecuteSql(sql);
         }
 
-        protected Action<ISqlStringBuilder> ChildWriter { get; set; }
+        protected Action<ISqlStringBuilder> ChildWriter { get; set; } = null!;
 
         private void ValidateType(Type type)
         {
@@ -222,7 +222,7 @@ namespace Bam.Data.Repositories
 
         private void SaveXrefs(object instance, Type pocoType)
         {
-            Dao dao = GetDaoInstanceById(pocoType, GetIdValue(instance).Value);
+            Dao dao = GetDaoInstanceById(pocoType, GetIdValue(instance)!.Value);
             if (SetDaoXrefCollectionValues(instance, dao))
             {
                 dao.ForceUpdate = true;

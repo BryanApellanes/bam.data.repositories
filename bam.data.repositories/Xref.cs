@@ -13,7 +13,7 @@ namespace Bam.Data.Repositories
 			this.Right = right;
 		}
 
-		public object Left { get; private set; }
-		public object Right { get; private set; }
+		public object Left { get; private set; } = null!;
+		public object Right { get; private set; } = null!;
 	}
 }

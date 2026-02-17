@@ -26,7 +26,7 @@ namespace Bam.Data.Repositories
             Database = db;
         }
         
-        public IDatabase Database { get; set; }
+        public IDatabase Database { get; set; } = null!;
         public List<ISqlStringBuilder> GetInsertStatements(object instance)
         {
             return GetInsertStatements(instance, Database);
@@ -151,19 +151,19 @@ namespace Bam.Data.Repositories
 
         private IEnumerable<AssignValue> GetUuidAndCuidAssignValues(object instance, Func<string, string> columnNameFormatter)
         {
-            object uuid = instance.Property("Uuid", false);
+            object uuid = instance.Property("Uuid", false)!;
             if (uuid != null)
             {
                 yield return new AssignValue("Uuid", uuid, columnNameFormatter);
             }
-            object cuid = instance.Property("Cuid", false);
+            object cuid = instance.Property("Cuid", false)!;
             if (cuid != null)
             {
                 yield return new AssignValue("Cuid", cuid, columnNameFormatter);
             }
         }
 
-        private IEnumerable<AssignValue> GetAssignValues(Type type, object instance, Func<string, string> columnNameFormatter, Func<PropertyInfo, bool> propertyPredicate = null)
+        private IEnumerable<AssignValue> GetAssignValues(Type type, object instance, Func<string, string> columnNameFormatter, Func<PropertyInfo, bool>? propertyPredicate = null)
         {
             propertyPredicate = propertyPredicate ?? BaseTypePropertyPredicate;
             return instance.EachDataProperty(type, propertyPredicate, (pi, v) => new AssignValue(pi.Name, v, columnNameFormatter));
@@ -172,10 +172,10 @@ namespace Bam.Data.Repositories
         private AssignValue GetUniquenessFilter(object instance, Func<string, string> columnNameFormatter)
         {
             Args.ThrowIfNull(instance, nameof(instance));
-            object identifier = Meta.GetId(instance);
+            object identifier = Meta.GetId(instance)!;
             if (identifier.Equals(default(long)))
             {
-                Args.Throw<InvalidOperationException>("Unable to get unique identifier for specified data: {0}", instance.ToString());
+                Args.Throw<InvalidOperationException>("Unable to get unique identifier for specified data: {0}", instance.ToString()!);
             }
             return new AssignValue("Id", identifier, columnNameFormatter);
         }

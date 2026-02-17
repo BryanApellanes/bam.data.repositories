@@ -15,8 +15,8 @@ namespace Bam.Data.Repositories
 			this.GeneratedAssemblyInfo = generatedAssemblyInfo;
 		}
 
-		public GeneratedAssemblyInfo GeneratedAssemblyInfo { get; set; }
-		
-		public Exception Exception { get; set; }
+		public GeneratedAssemblyInfo GeneratedAssemblyInfo { get; set; } = null!;
+
+		public Exception Exception { get; set; } = null!;
 	}
 }

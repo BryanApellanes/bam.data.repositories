@@ -2,8 +2,8 @@
 {
     public class SchemaTypeModel
     {
-        public Type Type { get; set; }
-        public string DaoNamespace { get; set; }
+        public Type Type { get; set; } = null!;
+        public string DaoNamespace { get; set; } = null!;
 
         public static SchemaTypeModel FromType(Type type, string daoNamespace)
         {

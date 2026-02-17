@@ -7,14 +7,14 @@ namespace Bam.Data.Repositories
 	public class RepositoryEventArgs<T> : RepositoryEventArgs
 	{
 		public RepositoryEventArgs(T data)
-			: base(data)
+			: base(data!)
 		{
 			this.DataAs = data;
 		}
 
 		public RepositoryEventArgs(Exception ex) : base(ex) { }
 
-		public T DataAs { get; set; }
+		public T DataAs { get; set; } = default!;
 	}
 
 	public class RepositoryEventArgs: EventArgs
@@ -36,9 +36,9 @@ namespace Bam.Data.Repositories
 				this.Message = $"{Message}:\r\nStackTrace: \t{ex.StackTrace}";
 			}
 		}
-        public Type Type { get; set; }
-		public object Data { get; private set; }
+        public Type Type { get; set; } = null!;
+		public object Data { get; private set; } = null!;
 
-		public string Message { get; set; }
+		public string Message { get; set; } = null!;
 	}
 }

@@ -46,7 +46,7 @@
             set => _keyId = value;
         }
 
-        string _compositeKey;
+        string _compositeKey = null!;
         public string CompositeKey
         {
             get
@@ -114,7 +114,7 @@
             return GetIntKeyHash();
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj is CompositeKeyAuditRepoData o)
             {

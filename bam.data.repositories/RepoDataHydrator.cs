@@ -17,7 +17,7 @@
                 return true;
             } catch (Exception ex)
             {
-                Logger.AddEntry("Exception hydrating RepoData of type ({0}): {1}", ex, data?.GetType()?.Name, ex.Message);
+                Logger.AddEntry("Exception hydrating RepoData of type ({0}): {1}", ex, data?.GetType()?.Name!, ex.Message);
                 return false;
             }
         }

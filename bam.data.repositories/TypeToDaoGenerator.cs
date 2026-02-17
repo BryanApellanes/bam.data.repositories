@@ -23,7 +23,7 @@ namespace Bam.Data.Repositories
     public class TypeToDaoGenerator : Loggable, IGeneratesDaoAssembly, IHasTypeSchemaTempPathProvider, ISourceGenerator
     {
         IDaoGenerator _daoGenerator;
-        IWrapperGenerator _wrapperGenerator;
+        IWrapperGenerator _wrapperGenerator = null!;
         ISchemaProvider _schemaProvider;
         HashSet<Assembly> _additionalReferenceAssemblies;
         HashSet<Type> _additionalReferenceTypes;
@@ -126,7 +126,7 @@ namespace Bam.Data.Repositories
             }
         }
 
-        string _daoNamespace;
+        string _daoNamespace = null!;
         public string DaoNamespace
         {
             get => _daoNamespace ?? $"{_baseNamespace}.Dao";
@@ -138,7 +138,7 @@ namespace Bam.Data.Repositories
             }
         }
 
-        string _wrapperNamespace;
+        string _wrapperNamespace = null!;
         public string WrapperNamespace
         {
             get => _wrapperNamespace ?? $"{_baseNamespace}.Wrappers";
@@ -149,7 +149,7 @@ namespace Bam.Data.Repositories
             }
         }
 
-        string _schemaName;
+        string _schemaName = null!;
         public string SchemaName
         {
             get
@@ -276,10 +276,10 @@ namespace Bam.Data.Repositories
                 info = GeneratedAssemblies.GetGeneratedAssemblyInfo(SchemaName) as GeneratedDaoAssemblyInfo;
             }
 
-            return info.GetAssembly();
+            return info!.GetAssembly();
         }
 
-        DaoSchemaDefinitionCreateResult _schemaDefinitionCreateResult;
+        DaoSchemaDefinitionCreateResult _schemaDefinitionCreateResult = null!;
         object _schemaDefinitionCreateResultLock = new object();
         public DaoSchemaDefinitionCreateResult DaoSchemaDefinitionCreateResult
         {
@@ -290,27 +290,27 @@ namespace Bam.Data.Repositories
         }
 
         [Verbosity(VerbosityLevel.Error, SenderMessageFormat = "Failed to generate DaoAssembly for {SchemaName}:\r\n {Message}")]
-        public event EventHandler GenerateDaoAssemblyFailed;
+        public event EventHandler GenerateDaoAssemblyFailed = null!;
 
         [Verbosity(VerbosityLevel.Information, SenderMessageFormat = "{Message}")]
-        public event EventHandler GenerateDaoAssemblySucceeded;
+        public event EventHandler GenerateDaoAssemblySucceeded = null!;
 
-        public string TempPath { get; set; }
+        public string TempPath { get; set; } = null!;
 
-        public string Message { get; set; }
+        public string Message { get; set; } = null!;
 
         [Verbosity(VerbosityLevel.Warning, SenderMessageFormat = "Couldn't delete folder {TempPath}:\r\nMessage: {Message}")]
-        public event EventHandler DeleteDaoTempFailed;
+        public event EventHandler DeleteDaoTempFailed = null!;
 
-        public Func<IDaoSchemaDefinition, ITypeSchema, string> TypeSchemaTempPathProvider { get; set; }
+        public Func<IDaoSchemaDefinition, ITypeSchema, string> TypeSchemaTempPathProvider { get; set; } = null!;
 
         /// <summary>
         /// The event that is raised when a difference is detected in a previous run of the generator.
         /// </summary>
         [Verbosity(VerbosityLevel.Warning, SenderMessageFormat = "TypeSchema difference detected\r\n {OldInfoString} \r\n *** \r\n {NewInfoString}")]
-        public event EventHandler SchemaDifferenceDetected;
-        public string OldInfoString { get; set; }
-        public string NewInfoString { get; set; }
+        public event EventHandler SchemaDifferenceDetected = null!;
+        public string OldInfoString { get; set; } = null!;
+        public string NewInfoString { get; set; } = null!;
 
         /// <summary>
         /// Warnings related to the type definitions, see TypeSchemaWarnings enum for possible warnings.
@@ -325,10 +325,10 @@ namespace Bam.Data.Repositories
         }
 
         [Verbosity(VerbosityLevel.Warning, EventArgsMessageFormat = "{Warning}: ParentType={ParentType}, ForeignKeyType={ForeignKeyType}")]
-        public event EventHandler TypeSchemaWarning;
+        public event EventHandler TypeSchemaWarning = null!;
 
         [Verbosity(VerbosityLevel.Warning, SenderMessageFormat = "Missing {PropertyType} property: {ClassName}.{PropertyName}")]
-        public event EventHandler SchemaWarning;
+        public event EventHandler SchemaWarning = null!;
         
         protected internal void EmitWarnings()
         {
@@ -409,7 +409,7 @@ namespace Bam.Data.Repositories
         /// </summary>
         /// <param name="schemaName"></param>
         /// <returns></returns>
-        protected internal DaoSchemaDefinitionCreateResult CreateSchemaDefinition(string schemaName = null)
+        protected internal DaoSchemaDefinitionCreateResult CreateSchemaDefinition(string? schemaName = null)
         {
             return _schemaProvider.CreateDaoSchemaDefinition(_types, schemaName);
         }
@@ -418,7 +418,7 @@ namespace Bam.Data.Repositories
         {
             try
             {
-                compilationEx = null;
+                compilationEx = null!;
                 IDaoSchemaDefinition schema = DaoSchemaDefinitionCreateResult.DaoSchemaDefinition;
                 string assemblyName = $"{schema.Name}.dll";
 
@@ -456,7 +456,7 @@ namespace Bam.Data.Repositories
             FireEvent(GenerateDaoAssemblySucceeded, args);
         }
         
-        protected void FireGenerateDaoAssemblyFailed(Exception ex = null)
+        protected void FireGenerateDaoAssemblyFailed(Exception? ex = null)
         {
             FireEvent(GenerateDaoAssemblyFailed, new GenerateDaoAssemblyEventArgs(ex));
         }

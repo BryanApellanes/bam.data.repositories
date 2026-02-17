@@ -5,9 +5,9 @@ namespace Bam.Data.Repositories
 {
     public abstract class RepositoryResolver : Loggable, IRepositoryResolver
     {
-        public ILogger Logger { get; set; }
-        public DataSourceProvider DataSourceProvider { get; set; }
-        public Func<IHttpContext, IRepository> GetRepositoryFunc { get; set; }
+        public ILogger Logger { get; set; } = null!;
+        public DataSourceProvider DataSourceProvider { get; set; } = null!;
+        public Func<IHttpContext, IRepository> GetRepositoryFunc { get; set; } = null!;
 
         public bool TryGetRepository<T>(IHttpContext context, out T repo) where T : IRepository
         {
@@ -18,8 +18,8 @@ namespace Bam.Data.Repositories
             }
             catch (Exception ex)
             {
-                Log.Default.AddEntry("Exception getting repository: {0}", ex, ex.Message);
-                repo = default(T);
+                Log.Default!.AddEntry("Exception getting repository: {0}", ex, ex.Message);
+                repo = default(T)!;
                 return false;
             }
         }

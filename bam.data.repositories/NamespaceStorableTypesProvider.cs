@@ -32,7 +32,7 @@ namespace Bam.CoreServices
                 {
                     foreach (Type type in ass.GetTypes().Where(TypeToDaoGenerator.ClrDaoTypeFilter))
                     {
-                        if (namespaces.Contains(type.Namespace))
+                        if (namespaces.Contains(type.Namespace!))
                         {
                             result.Add(type);
                         }
@@ -41,7 +41,7 @@ namespace Bam.CoreServices
             }
             catch (Exception ex)
             {
-                Bam.Logging.Log.Default.AddEntry("An exception occurred in {0}: {1}", ex, MethodBase.GetCurrentMethod().Name, ex.Message);
+                Bam.Logging.Log.Default!.AddEntry("An exception occurred in {0}: {1}", ex, MethodBase.GetCurrentMethod()!.Name, ex.Message);
             }
             return result;
         }

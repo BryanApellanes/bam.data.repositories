@@ -9,7 +9,7 @@ namespace Bam.Data.Repositories
     {
         Dictionary<SqlDialect, Func<string, Database>> _databaseConstructors;
 
-        static DatabaseFactory _factory;
+        static DatabaseFactory _factory = null!;
         static object _factoryLock = new object();
         public static DatabaseFactory Instance
         {
@@ -41,7 +41,7 @@ namespace Bam.Data.Repositories
         {
             Func<string, Database> ctor = _databaseConstructors[dialect];
             Args.ThrowIf(ctor == null, "Unsupported dialect specified: {0}", dialect.ToString());
-            return ctor(connectionString);
+            return ctor!(connectionString);
         }
     }
 }

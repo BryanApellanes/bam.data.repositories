@@ -11,20 +11,20 @@
         {
             Instance = instance;
             ULongCompositeKey = instance.GetULongKeyHash();
-            ReferencedCuid = instance.Property<string>("Cuid", true);
+            ReferencedCuid = instance.Property<string>("Cuid", true)!;
         }
-        protected IHasKeyHash Instance { get; set; }
+        protected IHasKeyHash Instance { get; set; } = null!;
         public ulong ULongCompositeKey { get; set; }
-        public string ReferencedCuid { get; set; }
+        public string ReferencedCuid { get; set; } = null!;
 
         /// <summary>
         /// The AssemblyQualifiedName of the type
         /// </summary>
-        public string TypeName { get; set; }
+        public string TypeName { get; set; } = null!;
 
         public Type GetReferencedType()
         {
-            return Type.GetType(TypeName);
+            return Type.GetType(TypeName)!;
         }
     }
 }

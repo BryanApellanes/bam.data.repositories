@@ -118,7 +118,7 @@ namespace Bam.Data.Repositories
 
         public bool GetIsPersisted(out IRepository repo)
         {
-            repo = Repository;
+            repo = Repository!;
             return IsPersisted;
         }
         
@@ -184,13 +184,13 @@ namespace Bam.Data.Repositories
                 case UniversalIdentifiers.Uuid:
                     if (instance.HasProperty("Uuid"))
                     {
-                        return instance.Property("Uuid");
+                        return instance.Property("Uuid")!;
                     }
                     break;
                 case UniversalIdentifiers.Cuid:
                     if (instance.HasProperty("Cuid"))
                     {
-                        return instance.Property("Cuid");
+                        return instance.Property("Cuid")!;
                     }
                     break;
                 case UniversalIdentifiers.CKey:
@@ -198,22 +198,22 @@ namespace Bam.Data.Repositories
                     {
                         if (!(instance is CompositeKeyAuditRepoData))
                         {
-                            Log.Warn("Getting CompositeKeyId as instance id but specified object instance is not of type {0}: {1}", nameof(CompositeKeyAuditRepoData), instance.ToString());
+                            Log.Warn("Getting CompositeKeyId as instance id but specified object instance is not of type {0}: {1}", nameof(CompositeKeyAuditRepoData), instance.ToString()!);
                         }
-                        return instance.Property("CompositeKey");
+                        return instance.Property("CompositeKey")!;
                     }else if (instance.HasProperty("Key"))
                     {
                         if (!(instance is KeyedAuditRepoData))
                         {
-                            Log.Warn("Getting Key property as instance id but specified object instance is not of type {0}: {1}", nameof(KeyedAuditRepoData), instance.ToString());
+                            Log.Warn("Getting Key property as instance id but specified object instance is not of type {0}: {1}", nameof(KeyedAuditRepoData), instance.ToString()!);
                         }
 
-                        return instance.Property("Key");
+                        return instance.Property("Key")!;
                     }
                     break;
             }
-            
-            return null;
+
+            return null!;
         }
     }
 }

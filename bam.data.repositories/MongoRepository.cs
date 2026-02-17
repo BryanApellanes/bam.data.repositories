@@ -24,21 +24,23 @@ namespace Bam.Data.Repositories
 			this._databaseName = databaseName;			
 		}
 
-		MongoClient _client;
+		MongoClient _client = null!;
 		readonly object _clientLock = new object();
 		protected MongoClient Client 
 		{
 			get { return _clientLock.DoubleCheckLock(ref _client, () => new MongoClient(_connectionString)); }
 		}
 
-		MongoServer _server;
+		MongoServer _server = null!;
 		readonly object _serverLock = new object();
 		protected MongoServer Server 
 		{
-			get { return _serverLock.DoubleCheckLock(ref _server, () => _client.GetServer()); }
+	#pragma warning disable CS0618
+		get { return _serverLock.DoubleCheckLock(ref _server, () => _client.GetServer()); }
+#pragma warning restore CS0618
 		}
 
-		MongoDatabase _database;
+		MongoDatabase _database = null!;
 		readonly object _databaseLock = new object();
 
 		protected MongoDatabase Database 
@@ -58,10 +60,10 @@ namespace Bam.Data.Repositories
 
 		protected MongoCollection GetCollection<T>() 
 		{
-			return GetCollection(typeof(T).FullName);
+			return GetCollection(typeof(T).FullName!);
 		}
 
-		public WriteConcernResult LastWriteConcernResult { get; private set; }
+		public WriteConcernResult LastWriteConcernResult { get; private set; } = null!;
 
 		public override void AddType<T>()
 		{
@@ -84,7 +86,7 @@ namespace Bam.Data.Repositories
 		{
 			try
 			{
-				MongoCollection collection = GetCollection(type.FullName);
+				MongoCollection collection = GetCollection(type.FullName!);
 				LastWriteConcernResult = collection.Insert(toCreate);
 				return toCreate;
 			}
@@ -92,23 +94,23 @@ namespace Bam.Data.Repositories
 			{
 				LastException = ex;
 				OnCreateFailed(new RepositoryEventArgs(toCreate));
-				return null;
+				return null!;
 			}
 		}
 
-		public override T Retrieve<T>(int id) 
+		public override T Retrieve<T>(int id)
 		{
 			return Retrieve<T>((long) id);
 		}
 
-		public override T Retrieve<T>(long id) 
+		public override T Retrieve<T>(long id)
 		{
-			return (T)Retrieve(typeof(T), id);
+			return (T)Retrieve(typeof(T), id)!;
 		}
 
         public override T Retrieve<T>(ulong id)
         {
-            return (T)Retrieve(typeof(T), id);
+            return (T)Retrieve(typeof(T), id)!;
         }
 
         public override object Retrieve(Type objectType, long id)
@@ -116,15 +118,15 @@ namespace Bam.Data.Repositories
 			try
 			{
 				PropertyInfo keyProp = GetKeyProperty(objectType);
-				MongoCollection collection = GetCollection(objectType.FullName);
+				MongoCollection collection = GetCollection(objectType.FullName!);
 				QueryDocument query = new QueryDocument(keyProp.Name, id);
-				return collection.FindOneAs(objectType, query);
+				return collection.FindOneAs(objectType, query)!;
 			}
 			catch (Exception ex)
 			{
 				LastException = ex;
 				OnRetrieveFailed(new RepositoryEventArgs(id));
-				return null;
+				return null!;
 			}
 		}
 
@@ -133,36 +135,36 @@ namespace Bam.Data.Repositories
             try
             {
                 PropertyInfo keyProp = GetKeyProperty(objectType);
-                MongoCollection collection = GetCollection(objectType.FullName);
+                MongoCollection collection = GetCollection(objectType.FullName!);
                 QueryDocument query = new QueryDocument(keyProp.Name, BsonValue.Create(id));
-                return collection.FindOneAs(objectType, query);
+                return collection.FindOneAs(objectType, query)!;
             }
             catch (Exception ex)
             {
                 LastException = ex;
                 OnRetrieveFailed(new RepositoryEventArgs(id));
-                return null;
+                return null!;
             }
         }
 
         public override T Retrieve<T>(string uuid)
         {
-            return (T)Retrieve(typeof(T), uuid);
+            return (T)Retrieve(typeof(T), uuid)!;
         }
 
 		public override object Retrieve(Type objectType, string uuid)
 		{
 			try
 			{
-				MongoCollection collection = GetCollection(objectType.FullName);
+				MongoCollection collection = GetCollection(objectType.FullName!);
 				QueryDocument query = new QueryDocument("Uuid", uuid);
-				return collection.FindOneAs(objectType, query);
+				return collection.FindOneAs(objectType, query)!;
 			}
 			catch (Exception ex)
 			{
 				LastException = ex;
 				OnRetrieveFailed(new RepositoryEventArgs(uuid));
-				return null;
+				return null!;
 			}
 		}
 
@@ -218,9 +220,9 @@ namespace Bam.Data.Repositories
             throw new NotImplementedException();
         }
 
-        public override T Update<T>(T toUpdate)
+        public override T Update<T>(T? toUpdate)
 		{
-			return (T)Update((object)toUpdate);
+			return (T)Update((object)toUpdate!)!;
 		}
 
         public override object Update(object toUpdate)
@@ -232,7 +234,7 @@ namespace Bam.Data.Repositories
 		{
 			try
 			{
-				MongoCollection collection = GetCollection(type.FullName);
+				MongoCollection collection = GetCollection(type.FullName!);
 				LastWriteConcernResult = collection.Save(toUpdate);
 				return toUpdate;
 			}
@@ -240,13 +242,13 @@ namespace Bam.Data.Repositories
 			{
 				LastException = ex;
 				OnUpdateFailed(new RepositoryEventArgs(toUpdate));
-				return null;
+				return null!;
 			}
 		}
 
-		public override bool Delete<T>(T toDelete) 
+		public override bool Delete<T>(T toDelete)
 		{
-			return Delete((object)toDelete);
+			return Delete((object)toDelete!);
 		}
 
         public override bool Delete(object toDelete)
@@ -259,8 +261,8 @@ namespace Bam.Data.Repositories
 			try
 			{
 				PropertyInfo keyProp = GetKeyProperty(type);
-				MongoCollection collection = GetCollection(type.FullName);
-				QueryDocument query = new QueryDocument(keyProp.Name, (BsonValue)keyProp.GetValue(toDelete));
+				MongoCollection collection = GetCollection(type.FullName!);
+				QueryDocument query = new QueryDocument(keyProp.Name, (BsonValue)keyProp.GetValue(toDelete)!);
 				LastWriteConcernResult = collection.Remove(query);
 				return true;
 			}

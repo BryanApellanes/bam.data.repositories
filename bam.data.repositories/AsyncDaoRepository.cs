@@ -92,17 +92,17 @@
 
         public override object Retrieve(Type objectType, string uuid)
         {
-            return DaoRepository.Retrieve(objectType, uuid);
+            return DaoRepository.Retrieve(objectType, uuid)!;
         }
 
         public override object Retrieve(Type objectType, long id)
         {
-            return DaoRepository.Retrieve(objectType, id);
+            return DaoRepository.Retrieve(objectType, id)!;
         }
 
         public override object Retrieve(Type objectType, ulong id)
         {
-            return DaoRepository.Retrieve(objectType, id);
+            return DaoRepository.Retrieve(objectType, id)!;
         }
 
         public override T Retrieve<T>(long id)
@@ -146,7 +146,7 @@
         {
             return DaoRepository.Update(type, toUpdate);
         }
-        public override T Update<T>(T toUpdate)
+        public override T Update<T>(T? toUpdate)
         {
             return DaoRepository.Update<T>(toUpdate);
         }

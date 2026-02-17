@@ -5,7 +5,7 @@
         public TypeXrefModel() : base()
         { }
 
-        public string DaoNamespace { get; set; }
+        public string DaoNamespace { get; set; } = null!;
         public static TypeXrefModel FromTypeXref(ITypeXref xref, string daoNamespace)
         {
             TypeXrefModel model = new TypeXrefModel();

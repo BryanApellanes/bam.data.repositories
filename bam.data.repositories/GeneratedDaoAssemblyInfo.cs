@@ -14,46 +14,46 @@ namespace Bam.Data.Repositories
             SchemaDefinition = schemaDefintion;
         }
 
-        public GeneratedDaoAssemblyInfo(string infoFileName, Assembly assembly, byte[] assemblyBytes = null) : base(
+        public GeneratedDaoAssemblyInfo(string infoFileName, Assembly assembly, byte[]? assemblyBytes = null) : base(
             infoFileName, assembly, assemblyBytes)
         {
         }
 
         [Exclude]
         [JsonIgnore]
-        public ITypeSchema TypeSchema { get; set; }
+        public ITypeSchema TypeSchema { get; set; } = null!;
 
         [Exclude]
         [JsonIgnore]
-        public IDaoSchemaDefinition SchemaDefinition { get; set; }
+        public IDaoSchemaDefinition SchemaDefinition { get; set; } = null!;
 
-        string _typeSchemaHash;
+        string _typeSchemaHash = null!;
         public string TypeSchemaHash
         {
             get
             {
                 if (string.IsNullOrEmpty(_typeSchemaHash))
                 {
-                    _typeSchemaHash = TypeSchema?.Hash;
+                    _typeSchemaHash = TypeSchema?.Hash!;
                 }
 
-                return _typeSchemaHash;
+                return _typeSchemaHash!;
             }
             set
             {
                 _typeSchemaHash = value;
             }
         }
-        string _typeSchemaInfo;
+        string _typeSchemaInfo = null!;
         public string TypeSchemaInfo
         {
             get
             {
                 if (string.IsNullOrEmpty(_typeSchemaInfo))
                 {
-                    _typeSchemaInfo = TypeSchema?.ToString();
+                    _typeSchemaInfo = TypeSchema?.ToString()!;
                 }
-                return _typeSchemaInfo;
+                return _typeSchemaInfo!;
             }
             set
             {
@@ -61,7 +61,7 @@ namespace Bam.Data.Repositories
             }
         }
 
-        string _schemaName;
+        string _schemaName = null!;
         public string SchemaName
         {
             get

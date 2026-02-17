@@ -10,11 +10,11 @@ namespace Bam.Data.Repositories
 	{
 		public MetaPropertyVersionInfo() { }
 
-		public string Hash { get; internal set; }
-		public PropertyInfo PropertyInfo { get; internal set; } 
+		public string Hash { get; internal set; } = null!;
+		public PropertyInfo PropertyInfo { get; internal set; } = null!;
 		public DateTime LastWrite { get; internal set; }
-		public string Name { get; internal set; }
+		public string Name { get; internal set; } = null!;
 		public int Version { get; internal set; }
-		public object Value { get; internal set; }
+		public object Value { get; internal set; } = null!;
 	}
 }

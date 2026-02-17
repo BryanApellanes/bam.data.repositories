@@ -37,12 +37,12 @@ namespace Bam.Data.Repositories
             } 
         }
         
-        public ITemplateRenderer TemplateRenderer { get; protected set; }
+        public ITemplateRenderer TemplateRenderer { get; protected set; } = null!;
 
         public IDaoRepoGenerationConfig Config
         {
             get; private set;
-        }
+        } = null!;
 
         public override bool WarningsAsErrors
         {
@@ -50,7 +50,7 @@ namespace Bam.Data.Repositories
             set => base.WarningsAsErrors = value;
         }
         
-        public Assembly SourceAssembly { get; set; }
+        public Assembly SourceAssembly { get; set; } = null!;
 
         public void Configure(IDaoRepoGenerationConfig? config)
         {
@@ -96,7 +96,7 @@ namespace Bam.Data.Repositories
             GenerateRepositorySource(Config.WriteSourceTo, Config.SchemaName);
         }
 
-        public string BaseRepositoryType { get; set; }
+        public string BaseRepositoryType { get; set; } = null!;
         public string SchemaRepositoryNamespace => $"{DaoNamespace}.Repository";
 
         /// <summary>
@@ -121,7 +121,7 @@ namespace Bam.Data.Repositories
         /// </summary>
         /// <param name="writeSourceTo"></param>
         /// <param name="schemaName"></param>
-        public virtual void GenerateRepositorySource(string writeSourceTo, string schemaName = null)
+        public virtual void GenerateRepositorySource(string writeSourceTo, string? schemaName = null)
         {
             AddTypes();
             Args.ThrowIf(Types.Length == 0, "No types were added");

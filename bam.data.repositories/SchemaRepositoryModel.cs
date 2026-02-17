@@ -6,10 +6,10 @@
         {
             BaseRepositoryType = "DaoRepository";
         }
-        public string SchemaName { get; set; }
-        public SchemaTypeModel[] Types { get; set; }
-        public string BaseNamespace { get; set; }
-        public string SchemaRepositoryNamespace { get; set; }
+        public string SchemaName { get; set; } = null!;
+        public SchemaTypeModel[] Types { get; set; } = null!;
+        public string BaseNamespace { get; set; } = null!;
+        public string SchemaRepositoryNamespace { get; set; } = null!;
         public string BaseRepositoryType { get; set; }
 
     }

@@ -2,7 +2,7 @@
 {
     internal class ProtocolBufferTypeModel
     {
-        public string TypeName { get; set; }
-        public string Properties { get; set; }
+        public string TypeName { get; set; } = null!;
+        public string Properties { get; set; } = null!;
     }
 }

@@ -25,7 +25,7 @@ namespace Bam.Data.Repositories
 		public string WrapperNamespace { get; set; }
         public string DaoNamespace { get; set; }
         public ITypeSchema TypeSchema { get; set; }
-        public string WriteSourceTo { get; set; }
+        public string WriteSourceTo { get; set; } = null!;
         public string InfoFileName => $"{WrapperNamespace}.Wrapper.genInfo.json";
 
         public virtual void Generate(ITypeSchema schema, string writeTo)

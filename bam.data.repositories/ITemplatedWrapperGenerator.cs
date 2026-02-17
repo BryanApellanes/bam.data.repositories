@@ -4,7 +4,7 @@
     {
         ITemplateRenderer<WrapperModel> TemplateRenderer { get; }
 
-        GeneratedAssemblyInfo GenerateAssembly();
-        void WriteSource(string writeSourceDir);
+        new GeneratedAssemblyInfo GenerateAssembly();
+        new void WriteSource(string writeSourceDir);
     }
 }

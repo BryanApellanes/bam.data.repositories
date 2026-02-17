@@ -14,13 +14,13 @@ namespace Bam.Data.Repositories
 			ObjectPersister = objectPersister;
 		}
 		
-		static IMetaProvider _default;
+		static IMetaProvider _default = null!;
 		static object _defaultLock = new object();
 		public static IMetaProvider Default
 		{
 			get
 			{
-				return _defaultLock.DoubleCheckLock(ref _default, () => new MetaProvider(ServiceRegistry.Default.Get<IObjectPersister>()));
+				return _defaultLock.DoubleCheckLock(ref _default!, () => new MetaProvider(ServiceRegistry.Default!.Get<IObjectPersister>()));
 			}
 		}
 

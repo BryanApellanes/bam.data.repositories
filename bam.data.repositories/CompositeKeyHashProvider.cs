@@ -6,7 +6,7 @@
         {
             Args.ThrowIfNull(instance, "instance");
             string[] compositeKeyProperties = GetCompositeKeyProperties(instance.GetType());
-            return GetULongKeyHash(instance, instance.Property("PropertyDelimiter")?.ToString().Or("\r\n"), compositeKeyProperties);
+            return GetULongKeyHash(instance, instance.Property("PropertyDelimiter")?.ToString().Or("\r\n")!, compositeKeyProperties);
         }
         
         /// <summary>
