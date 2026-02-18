@@ -220,7 +220,7 @@ namespace Bam.Data.Repositories
             throw new NotImplementedException();
         }
 
-        public override T Update<T>(T? toUpdate)
+        public override T Update<T>(T toUpdate)
 		{
 			return (T)Update((object)toUpdate!)!;
 		}

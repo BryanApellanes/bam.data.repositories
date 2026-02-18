@@ -373,7 +373,7 @@ namespace Bam.Data.Repositories
         {
             return Query(type, QueryFilter.FromDynamic(query));
         }
-		public abstract T Update<T>(T? toUpdate) where T : new();
+		public abstract T Update<T>(T toUpdate) where T : new();
 		public abstract object Update(object toUpdate);
         public abstract object Update(Type type, object toUpdate);
 		public abstract bool Delete<T>(T toDelete) where T : new();

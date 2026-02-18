@@ -146,7 +146,7 @@
         {
             return DaoRepository.Update(type, toUpdate);
         }
-        public override T Update<T>(T? toUpdate)
+        public override T Update<T>(T toUpdate)
         {
             return DaoRepository.Update<T>(toUpdate);
         }

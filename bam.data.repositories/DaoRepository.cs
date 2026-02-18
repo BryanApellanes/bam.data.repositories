@@ -637,7 +637,7 @@ namespace Bam.Data.Repositories
         /// <typeparam name="T">The type.</typeparam>
         /// <param name="toUpdate">The object instance to update.</param>
         /// <returns>The updated object instance.</returns>
-        public override T Update<T>(T? toUpdate)
+        public override T Update<T>(T toUpdate)
 		{
 			return (T)Update((object)toUpdate!)!;
 		}
