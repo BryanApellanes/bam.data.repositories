@@ -1,154 +1,164 @@
-﻿namespace Bam.Data.Repositories
+using Bam.Data.Schema;
+using Bam.Logging;
+
+namespace Bam.Data.Repositories
 {
     /// <summary>
-    /// An asynchronous wrapper for a DaoRepository
+    /// A DaoRepository that also implements IAsyncRepository and IAsyncSchemaRepository,
+    /// providing async versions of all repository and schema operations.
     /// </summary>
-    public class AsyncDaoRepository : AsyncRepository
+    public class AsyncDaoRepository : DaoRepository, IAsyncRepository, IAsyncSchemaRepository
     {
-        public AsyncDaoRepository(DaoRepository daoRepository)
+        public AsyncDaoRepository() : base()
         {
-            DaoRepository = daoRepository;
         }
 
-        public override void AddType(Type type)
+        public AsyncDaoRepository(ISchemaProvider schemaProvider, IDaoGenerator daoGenerator, IWrapperGenerator wrapperGenerator)
+            : base(schemaProvider, daoGenerator, wrapperGenerator)
         {
-            DaoRepository.AddType(type);
-            base.AddType(type);
-        }
-        public DaoRepository DaoRepository { get; set; }
-
-        public override object Create(Type type, object toCreate)
-        {
-            return DaoRepository.Create(type, toCreate);
-        }
-        public override object Create(object toCreate)
-        {
-            return DaoRepository.Create(toCreate);
-        }
-        
-        public override IEnumerable<T> Query<T>(IQueryFilter query)
-        {
-            return DaoRepository.Query<T>(query);
         }
 
-        public override IEnumerable<object> Query(Type type, IQueryFilter query)
+        public AsyncDaoRepository(ISchemaProvider schemaProvider, IDaoGenerator daoGenerator, IWrapperGenerator wrapperGenerator, IDatabase? database, ILogger? logger)
+            : base(schemaProvider, daoGenerator, wrapperGenerator, database, logger)
         {
-            return DaoRepository.Query(type, query);
         }
 
+        #region IAsyncRepository Members
 
-        public override T Create<T>(T toCreate)
+        public Task<T> CreateAsync<T>(T instance) where T : class, new()
         {
-            return DaoRepository.Create(toCreate);
-        }
-        public override bool Delete(Type type, object toDelete)
-        {
-            return DaoRepository.Delete(type, toDelete);
-        }
-        public override bool Delete(object toDelete)
-        {
-            return DaoRepository.Delete(toDelete);
+            return Task.Run(() => Create(instance));
         }
 
-        public override bool Delete<T>(T toDelete)
+        public Task<bool> DeleteAsync(object toDelete)
         {
-            return DaoRepository.Delete<T>(toDelete);
+            return Task.Run(() => Delete(toDelete));
         }
 
-        public override IEnumerable<object> Query(dynamic query)
+        public Task<bool> DeleteAsync<T>(T toDelete) where T : new()
         {
-            return DaoRepository.Query(query);
+            return Task.Run(() => Delete(toDelete));
         }
 
-        public override IEnumerable<object> Query(Type type, Dictionary<string, object> queryParameters)
+        public Task<IEnumerable<object>> QueryAsync(dynamic query)
         {
-            return DaoRepository.Query(type, queryParameters);
+            return Task.Run((Func<IEnumerable<object>>)(() => Query(query)));
         }
 
-        public override IEnumerable<object> Query(Type type, Func<object, bool> predicate)
+        public Task<IEnumerable<object>> QueryAsync(Type type, Dictionary<string, object> queryParams)
         {
-            return DaoRepository.Query(type, predicate);
+            return Task.Run(() => Query(type, queryParams));
         }
 
-        public override IEnumerable<object> Query(string propertyName, object propertyValue)
+        public Task<IEnumerable<object>> QueryAsync(Type type, Func<object, bool> predicate)
         {
-            return DaoRepository.Query(propertyName, propertyValue);
+            return Task.Run(() => Query(type, predicate));
         }
 
-        public override IEnumerable<T> Query<T>(dynamic query)
+        public Task<IEnumerable<object>> QueryAsync(string propertyName, object propertyValue)
         {
-            return DaoRepository.Query<T>(query);
+            return Task.Run(() => Query(propertyName, propertyValue));
         }
 
-        public override IEnumerable<T> Query<T>(Dictionary<string, object> queryParameters)
+        public Task<IEnumerable<T>> QueryAsync<T>(Func<T, bool> query) where T : class, new()
         {
-            return DaoRepository.Query<T>(queryParameters);
+            return Task.Run(() => Query(query));
         }
 
-        public override IEnumerable<T> Query<T>(Func<T, bool> query)
+        public Task<IEnumerable<T>> QueryAsync<T>(Dictionary<string, object> queryParams) where T : class, new()
         {
-            return DaoRepository.Query<T>(query);
+            return Task.Run(() => Query<T>(queryParams));
         }
 
-        public override object Retrieve(Type objectType, string uuid)
+        public Task<IEnumerable<object>> RetrieveAllAsync(Type type)
         {
-            return DaoRepository.Retrieve(objectType, uuid)!;
+            return Task.Run(() => RetrieveAll(type));
         }
 
-        public override object Retrieve(Type objectType, long id)
+        public Task<IEnumerable<T>> RetrieveAllAsync<T>() where T : class, new()
         {
-            return DaoRepository.Retrieve(objectType, id)!;
+            return Task.Run(() => RetrieveAll<T>());
         }
 
-        public override object Retrieve(Type objectType, ulong id)
+        public Task<object> RetrieveAsync(Type objectType, string uuid)
         {
-            return DaoRepository.Retrieve(objectType, id)!;
+            return Task.Run(() => Retrieve(objectType, uuid));
         }
 
-        public override T Retrieve<T>(long id)
+        public Task<object> RetrieveAsync(Type objectType, long id)
         {
-            return DaoRepository.Retrieve<T>(id);
+            return Task.Run(() => Retrieve(objectType, id));
         }
 
-        public override T Retrieve<T>(ulong id)
+        public Task<T> RetrieveAsync<T>(long id) where T : class, new()
         {
-            return DaoRepository.Retrieve<T>(id);
+            return Task.Run(() => Retrieve<T>(id));
         }
 
-        public override T Retrieve<T>(int id)
+        public Task<T> RetrieveAsync<T>(int id) where T : class, new()
         {
-            return DaoRepository.Retrieve<T>(id);
-        }
-        public override T Retrieve<T>(string uuid)
-        {
-            return DaoRepository.Retrieve<T>(uuid);
-        }
-        public override IEnumerable<object> RetrieveAll(Type type)
-        {
-            return DaoRepository.RetrieveAll(type);
+            return Task.Run(() => Retrieve<T>(id));
         }
 
-        public override void BatchRetrieveAll(Type type, int batchSize, Action<IEnumerable<object>> processor)
+        public Task<object> SaveAsync(object instance)
         {
-            DaoRepository.BatchRetrieveAll(type, batchSize, processor);
+            return Task.Run(() => Save(instance))!;
         }
 
-        public override IEnumerable<T> RetrieveAll<T>()
+        public new Task<T> SaveAsync<T>(T instance) where T : class, new()
         {
-            return DaoRepository.RetrieveAll<T>();
+            return Task.Run(() => Save<T>(instance));
         }
 
-        public override object Update(object toUpdate)
+        public Task<object> UpdateAsync(object toUpdate)
         {
-            return DaoRepository.Update(toUpdate);
+            return Task.Run(() => Update(toUpdate));
         }
-        public override object Update(Type type, object toUpdate)
+
+        public Task<T> UpdateAsync<T>(T toUpdate) where T : new()
         {
-            return DaoRepository.Update(type, toUpdate);
+            return Task.Run(() => Update<T>(toUpdate));
         }
-        public override T Update<T>(T toUpdate)
+
+        #endregion
+
+        #region IAsyncSchemaRepository Members
+
+        public Task SetOneWhereAsync<T>(IQueryFilter where) where T : new()
         {
-            return DaoRepository.Update<T>(toUpdate);
+            return Task.Run(() => SetOneWhere<T>(where));
         }
+
+        public Task<T?> GetOneWhereAsync<T>(IQueryFilter where) where T : new()
+        {
+            return Task.Run(() => GetOneWhere<T>(where));
+        }
+
+        public Task<T?> OneWhereAsync<T>(IQueryFilter where) where T : new()
+        {
+            return Task.Run(() => OneWhere<T>(where));
+        }
+
+        public Task<IEnumerable<T>> WhereAsync<T>(IQueryFilter where) where T : new()
+        {
+            return Task.Run(() => Where<T>(where));
+        }
+
+        public Task<IEnumerable<T>> TopWhereAsync<T>(int count, IQueryFilter where) where T : new()
+        {
+            return Task.Run(() => TopWhere<T>(count, where));
+        }
+
+        public Task<long> CountAsync<T>() where T : new()
+        {
+            return Task.Run(() => Count<T>());
+        }
+
+        public Task<long> CountWhereAsync<T>(IQueryFilter where) where T : new()
+        {
+            return Task.Run(() => CountWhere<T>(where));
+        }
+
+        #endregion
     }
 }

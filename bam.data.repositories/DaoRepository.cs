@@ -19,7 +19,7 @@ namespace Bam.Data.Repositories
     /// the values call Retrieve(id) or Retrieve(uuid).    
     /// </summary>
     [Serializable] // for memory size calculation
-    public class DaoRepository : Repository, IDaoRepository, IGeneratesDaoAssembly, IHasTypeSchemaTempPathProvider, IQueryFilterable
+    public class DaoRepository : Repository, IDaoRepository, ISchemaRepository, IGeneratesDaoAssembly, IHasTypeSchemaTempPathProvider, IQueryFilterable
     {
 	    protected DaoRepository()
 	    {
@@ -190,10 +190,18 @@ namespace Bam.Data.Repositories
             set;
         }
 
-		public bool WarningsAsErrors
+		private bool _warningsAsErrors;
+		public virtual bool WarningsAsErrors
         {
-            get => TypeToDaoGenerator.WarningsAsErrors;
-            set => TypeToDaoGenerator.WarningsAsErrors = value;
+            get => TypeToDaoGenerator != null ? TypeToDaoGenerator.WarningsAsErrors : _warningsAsErrors;
+            set
+            {
+	            _warningsAsErrors = value;
+	            if (TypeToDaoGenerator != null)
+	            {
+		            TypeToDaoGenerator.WarningsAsErrors = value;
+	            }
+            }
         }
 
 		public IDatabase Database { get; set; }
@@ -892,6 +900,140 @@ namespace Bam.Data.Repositories
                 return results;
             }
         }
+
+        #region ISchemaRepository Members
+
+        /// <summary>
+        /// Set one entry matching the specified filter. If none exists, one is created.
+        /// </summary>
+        public void SetOneWhere<T>(IQueryFilter where) where T : new()
+        {
+            Type daoType = GetDaoType(typeof(T));
+            MethodInfo method = daoType.GetMethod("GetOneWhere", new Type[] { typeof(QueryFilter), typeof(IDatabase) })!;
+            method.Invoke(null, new object[] { where, Database });
+        }
+
+        /// <summary>
+        /// Get one entry matching the specified filter. If none exists, one is created.
+        /// </summary>
+        public T? GetOneWhere<T>(IQueryFilter where) where T : new()
+        {
+            Type daoType = GetDaoType(typeof(T));
+            MethodInfo method = daoType.GetMethod("GetOneWhere", new Type[] { typeof(QueryFilter), typeof(IDatabase) })!;
+            object? daoResult = method.Invoke(null, new object[] { where, Database });
+            if (daoResult == null) return default;
+            Type wrapperType = GetWrapperType<T>();
+            T data = ((Dao)daoResult).CopyAs<T>();
+            return new DaoRepoData<T>(data, this);
+        }
+
+        /// <summary>
+        /// Execute a query that should return only one result.
+        /// </summary>
+        public T? OneWhere<T>(IQueryFilter where) where T : new()
+        {
+            Type daoType = GetDaoType(typeof(T));
+            MethodInfo method = daoType.GetMethod("OneWhere", new Type[] { typeof(QueryFilter), typeof(IDatabase) })!;
+            object? daoResult = method.Invoke(null, new object[] { where, Database });
+            if (daoResult == null) return default;
+            Type wrapperType = GetWrapperType<T>();
+            T data = (T)((Dao)daoResult).CopyAs(wrapperType, this)!;
+            return new DaoRepoData<T>(data, this);
+        }
+
+        /// <summary>
+        /// Execute a query and return the results.
+        /// </summary>
+        public IEnumerable<T> Where<T>(IQueryFilter where) where T : new()
+        {
+            Type daoType = GetDaoType(typeof(T));
+            MethodInfo method = daoType.GetMethod("Where", new Type[] { typeof(QueryFilter), typeof(IDatabase) })!;
+            IEnumerable daoResults = (IEnumerable)method.Invoke(null, new object[] { where, Database })!;
+            return Wrap<T>(daoResults);
+        }
+
+        /// <summary>
+        /// Execute a query and return the specified number of results.
+        /// </summary>
+        public IEnumerable<T> TopWhere<T>(int count, IQueryFilter where) where T : new()
+        {
+            return Top<T>(count, where);
+        }
+
+        /// <summary>
+        /// Return the count of entries for the specified type.
+        /// </summary>
+        public long Count<T>() where T : new()
+        {
+            Type daoType = GetDaoType(typeof(T));
+            MethodInfo method = daoType.GetMethod("Count", new Type[] { typeof(IDatabase) })!;
+            return (long)method.Invoke(null, new object[] { Database })!;
+        }
+
+        /// <summary>
+        /// Execute a query and return the number of results.
+        /// </summary>
+        public long CountWhere<T>(IQueryFilter where) where T : new()
+        {
+            Type daoType = GetDaoType(typeof(T));
+            Type columnsType = GetColumnsType(daoType);
+            Type whereDelegateType = typeof(WhereDelegate<>).MakeGenericType(columnsType);
+            MethodInfo method = daoType.GetMethod("Count", new Type[] { whereDelegateType, typeof(IDatabase) })!;
+            object whereDelegate = CreateWhereDelegateForFilter(columnsType, where);
+            return (long)method.Invoke(null, new object[] { whereDelegate, Database })!;
+        }
+
+        /// <summary>
+        /// Process all entries in batches.
+        /// </summary>
+        public async Task BatchAll<T>(int batchSize, Action<IEnumerable<T>> processor) where T : new()
+        {
+            await Task.Run(() =>
+            {
+                long lastId = 0;
+                while (true)
+                {
+                    QueryFilter filter = new QueryFilter("Id") > Filter.Value(lastId);
+                    IEnumerable<T> batch = Top<T>(batchSize, filter, "Id", SortOrder.Ascending);
+                    T[] items = batch.ToArray();
+                    if (items.Length == 0) break;
+                    processor(items);
+                    if (items.Length < batchSize) break;
+                    // Get the last Id from the batch for pagination
+                    PropertyInfo? idProp = typeof(T).GetProperty("Id");
+                    if (idProp != null)
+                    {
+                        object? idVal = idProp.GetValue(items[^1]);
+                        if (idVal is long l) lastId = l;
+                        else if (idVal is ulong ul) lastId = (long)ul;
+                        else if (idVal is int i) lastId = i;
+                        else break;
+                    }
+                    else break;
+                }
+            });
+        }
+
+        private Type GetColumnsType(Type daoType)
+        {
+            return daoType.Assembly.GetType($"{daoType.FullName}Columns")!;
+        }
+
+        /// <summary>
+        /// Creates a WhereDelegate&lt;TColumns&gt; that returns the specified IQueryFilter,
+        /// ignoring the columns parameter. This allows generic IQueryFilter-based methods
+        /// to call DAO static methods that expect type-specific WhereDelegate&lt;TColumns&gt;.
+        /// </summary>
+        private object CreateWhereDelegateForFilter(Type columnsType, IQueryFilter filter)
+        {
+            Type whereDelegateType = typeof(WhereDelegate<>).MakeGenericType(columnsType);
+            ParameterExpression param = Expression.Parameter(columnsType, "c");
+            ConstantExpression filterConstant = Expression.Constant(filter, typeof(IQueryFilter));
+            var lambda = Expression.Lambda(whereDelegateType, filterConstant, param);
+            return lambda.Compile();
+        }
+
+        #endregion
 
         Dictionary<Type, Type> _daoTypeLookup = new Dictionary<Type, Type>();
         object _daoTypeResolverLock = new object();

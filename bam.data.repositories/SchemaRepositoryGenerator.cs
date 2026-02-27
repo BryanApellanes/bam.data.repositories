@@ -60,7 +60,11 @@ namespace Bam.Data.Repositories
             }
             Config = config;
             CheckIdField = config.CheckForIds;
-            BaseRepositoryType = config.UseInheritanceSchema ? nameof(DaoInheritanceRepository) : nameof(DaoRepository);
+            BaseRepositoryType = config.UseInheritanceSchema
+                ? nameof(DaoInheritanceRepository)
+                : config.UseAsync
+                    ? nameof(AsyncDaoRepository)
+                    : nameof(DaoRepository);
             BaseNamespace = Config.FromNamespace;            
         }
 
