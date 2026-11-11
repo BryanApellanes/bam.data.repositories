@@ -15,10 +15,21 @@ namespace Bam.Data.Repositories
     /// <see cref="Repository.GetKeyProperty(Type)"/> resolves (a <c>[Key]</c> property, else <c>Id</c>).
     /// </summary>
     /// <remarks>
-    /// MongoDB does not assign numeric keys, so the caller sets the key before <see cref="Create(object)"/>;
-    /// two instances with the same key collide. Failures are not thrown: they are recorded in
+    /// MongoDB does not assign numeric keys, so the caller sets the key before <see cref="Create(object)"/>.
+    /// A second <see cref="Create(object)"/> with a key that is already stored fails: the document id is
+    /// unique by definition, and for a type whose key is not the document id the repository creates a unique
+    /// index on the key element the first time it writes that type. Creating that index fails, and so does
+    /// the write, when the collection already holds duplicate keys.
+    /// <para>
+    /// Create, Retrieve, Update and Delete do not throw: a failure is recorded in
     /// <see cref="Repository.LastException"/>, the matching failed event is raised, and the method returns
-    /// null (or false). Query overloads that are not written yet throw <see cref="NotImplementedException"/>.
+    /// null (or false). The Query overloads do throw what the driver throws. Query overloads that are not
+    /// written yet throw <see cref="NotImplementedException"/>.
+    /// </para>
+    /// <para>
+    /// A <see cref="BsonDocument"/>, JSON string or filter definition passed to Query is sent to the server
+    /// as written, operators such as <c>$where</c> included. Never build one from untrusted input.
+    /// </para>
     /// </remarks>
     public class MongoRepository : Repository, IQueryFilterable
     {
@@ -27,6 +38,8 @@ namespace Bam.Data.Repositories
 
         private readonly string _connectionString;
         private readonly string _databaseName;
+        private readonly HashSet<Type> _keyIndexedTypes = new HashSet<Type>();
+        private readonly object _keyIndexLock = new object();
 
         /// <summary>
         /// Creates a repository over the named database on the server the connection string points at.
@@ -131,6 +144,7 @@ namespace Bam.Data.Repositories
             try
             {
                 IMongoCollection<BsonDocument> collection = GetCollection(type.FullName!);
+                EnsureKeyIsUnique(type, collection);
                 collection.InsertOne(toCreate.ToBsonDocument(type));
                 return toCreate;
             }
@@ -261,8 +275,14 @@ namespace Bam.Data.Repositories
         /// Queries the collection for <typeparamref name="T"/>. <paramref name="query"/> may be a
         /// <see cref="FilterDefinition{TDocument}"/> of <see cref="BsonDocument"/>, a <see cref="BsonDocument"/>,
         /// a JSON filter string, or any object whose properties are matched for equality by element name.
-        /// A null query matches every document.
+        /// A null query matches every document; pass it typed as <see cref="object"/>, because an untyped null
+        /// is ambiguous between the Query overloads.
         /// </summary>
+        /// <remarks>
+        /// The document, JSON and filter definition forms are raw filters: the server evaluates whatever
+        /// operators they hold, <c>$where</c> included. Never build one from untrusted input. Driver
+        /// exceptions are thrown to the caller.
+        /// </remarks>
         /// <typeparam name="T">The stored type.</typeparam>
         /// <param name="query">The filter, in one of the forms above.</param>
         public override IEnumerable<T> Query<T>(dynamic query) //where T: new()
@@ -305,6 +325,7 @@ namespace Bam.Data.Repositories
             try
             {
                 IMongoCollection<BsonDocument> collection = GetCollection(type.FullName!);
+                EnsureKeyIsUnique(type, collection);
                 BsonDocument document = toUpdate.ToBsonDocument(type);
                 if (!HasIdMember(type))
                 {
@@ -369,7 +390,10 @@ namespace Bam.Data.Repositories
 
         /// <summary>
         /// Queries the collection for <typeparamref name="T"/> with a driver filter and materializes the
-        /// matches. A null filter matches every document: a null passed as a dynamic query binds here.
+        /// matches. A null filter matches every document. On a reference typed as
+        /// <see cref="MongoRepository"/>, a dynamic argument that holds a filter definition, a
+        /// <see cref="BsonDocument"/>, a JSON string or null binds here through the driver's implicit conversions.
+        /// The filter is sent as written; never build one from untrusted input.
         /// </summary>
         /// <typeparam name="T">The stored type.</typeparam>
         /// <param name="filter">The filter to apply, or null for none.</param>
@@ -425,12 +449,7 @@ namespace Bam.Data.Repositories
         // Create stored whatever representation the class map gives the key.
         private static FilterDefinition<BsonDocument> KeyFilter(Type type, PropertyInfo keyProp, object? keyValue)
         {
-            BsonMemberMap? memberMap = BsonClassMap.LookupClassMap(type).GetMemberMap(keyProp.Name);
-            if (memberMap == null)
-            {
-                return Builders<BsonDocument>.Filter.Eq(keyProp.Name, BsonValue.Create(keyValue));
-            }
-
+            BsonMemberMap memberMap = GetMemberMap(type, keyProp.Name);
             Type keyType = Nullable.GetUnderlyingType(keyProp.PropertyType) ?? keyProp.PropertyType;
             object? typedValue = keyValue == null ? null : Convert.ChangeType(keyValue, keyType);
             BsonValue bsonValue = memberMap.GetSerializer().ToBsonValue(typedValue);
@@ -439,8 +458,44 @@ namespace Bam.Data.Repositories
 
         private static string GetElementName(Type type, string memberName)
         {
-            BsonMemberMap? memberMap = BsonClassMap.LookupClassMap(type).GetMemberMap(memberName);
-            return memberMap?.ElementName ?? memberName;
+            return GetMemberMap(type, memberName).ElementName;
+        }
+
+        // AllMemberMaps covers members declared on base classes; BsonClassMap.GetMemberMap sees only those
+        // declared on the class itself. An unmapped member has no known element name, so nothing is guessed.
+        private static BsonMemberMap GetMemberMap(Type type, string memberName)
+        {
+            BsonMemberMap? memberMap = BsonClassMap.LookupClassMap(type).AllMemberMaps.FirstOrDefault(map => map.MemberName == memberName);
+            if (memberMap == null)
+            {
+                throw new InvalidOperationException($"{type.FullName} has no BSON member map for {memberName}; it cannot be matched against stored documents.");
+            }
+
+            return memberMap;
+        }
+
+        // A key that is not the document id is unique only if an index says so. Created once per type for
+        // the life of this repository; the server treats a repeat as a no-op.
+        private void EnsureKeyIsUnique(Type type, IMongoCollection<BsonDocument> collection)
+        {
+            lock (_keyIndexLock)
+            {
+                if (_keyIndexedTypes.Contains(type))
+                {
+                    return;
+                }
+
+                BsonMemberMap keyMap = GetMemberMap(type, GetKeyProperty(type).Name);
+                if (keyMap.ElementName != DocumentIdElementName)
+                {
+                    CreateIndexModel<BsonDocument> uniqueKey = new CreateIndexModel<BsonDocument>(
+                        Builders<BsonDocument>.IndexKeys.Ascending(keyMap.ElementName),
+                        new CreateIndexOptions { Unique = true });
+                    collection.Indexes.CreateOne(uniqueKey);
+                }
+
+                _keyIndexedTypes.Add(type);
+            }
         }
 
         private static bool HasIdMember(Type type)

@@ -229,6 +229,132 @@ namespace Bam.Data.Repositories.Tests.Integration
                 .UnlessItFailed();
         }
 
+        [IntegrationTest]
+        public void QueryWithEachFilterFormThroughTheBaseRepository()
+        {
+            When.A<MongoTestScope>("queries widgets through a Repository reference, where only the dynamic overload is visible",
+                MongoTestScope.Open,
+                scope =>
+                {
+                    using (scope)
+                    {
+                        Repository repository = scope.Repository;
+                        repository.Create(new MongoWidget { Id = 1, Uuid = "a", Name = "Apple", Quantity = 5 });
+                        repository.Create(new MongoWidget { Id = 2, Uuid = "b", Name = "Banana", Quantity = 5 });
+                        repository.Create(new MongoWidget { Id = 3, Uuid = "c", Name = "Cherry", Quantity = 9 });
+
+                        object definition = Builders<BsonDocument>.Filter.Gt(nameof(MongoWidget.Quantity), 5);
+                        object document = new BsonDocument(nameof(MongoWidget.Quantity), 5);
+                        object json = "{ Name: \"Banana\" }";
+                        object filterObject = new NameFilter { Name = "Apple" };
+                        object? nothing = null;
+
+                        IEnumerable<MongoWidget> byDefinition = repository.Query<MongoWidget>(definition);
+                        IEnumerable<MongoWidget> byDocument = repository.Query<MongoWidget>(document);
+                        IEnumerable<MongoWidget> byJson = repository.Query<MongoWidget>(json);
+                        IEnumerable<MongoWidget> byObject = repository.Query<MongoWidget>(filterObject);
+                        IEnumerable<MongoWidget> all = repository.Query<MongoWidget>(nothing!);
+
+                        dynamic? untypedNull = null;
+                        bool untypedNullIsAmbiguous = false;
+                        try
+                        {
+                            repository.Query<MongoWidget>(untypedNull);
+                        }
+                        catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException)
+                        {
+                            untypedNullIsAmbiguous = true;
+                        }
+
+                        return new BaseQueryOutcome(
+                            byDefinition.Select(w => w.Name).ToArray(),
+                            byDocument.Select(w => w.Name).OrderBy(n => n).ToArray(),
+                            byJson.Select(w => w.Name).ToArray(),
+                            byObject.Select(w => w.Name).ToArray(),
+                            all.Count(),
+                            untypedNullIsAmbiguous);
+                    }
+                })
+                .TheTest
+                .ShouldPass<BaseQueryOutcome>((because, outcome) =>
+                {
+                    because.ItsTrue("a filter definition is applied", outcome.ByDefinition.SequenceEqual(new[] { "Cherry" }));
+                    because.ItsTrue("a BsonDocument is applied", outcome.ByDocument.SequenceEqual(new[] { "Apple", "Banana" }));
+                    because.ItsTrue("a JSON string is applied", outcome.ByJson.SequenceEqual(new[] { "Banana" }));
+                    because.ItsTrue("an object's properties are matched for equality", outcome.ByObject.SequenceEqual(new[] { "Apple" }));
+                    because.ItsTrue("a null typed as object matches everything", outcome.AllCount == 3);
+                    because.ItsTrue("an untyped dynamic null is ambiguous between the Query overloads", outcome.UntypedNullIsAmbiguous);
+                })
+                .SoBeHappy()
+                .UnlessItFailed();
+        }
+
+        [IntegrationTest]
+        public void RoundTripATypeWhoseKeyIsDeclaredOnABaseClass()
+        {
+            When.A<MongoTestScope>("creates, retrieves, updates and deletes a type whose Id and Uuid come from a base class",
+                MongoTestScope.Open,
+                scope =>
+                {
+                    using (scope)
+                    {
+                        bool updateFailedRaised = false;
+                        scope.Repository.UpdateFailed += (_, _) => updateFailedRaised = true;
+                        scope.Repository.Create(new MongoDerivedRecord { Id = 5, Uuid = "five", Name = "Original" });
+                        scope.Repository.Create(new MongoDerivedRecord { Id = 6, Uuid = "six", Name = "Other" });
+                        string? byId = scope.Repository.Retrieve<MongoDerivedRecord>(5UL)?.Name;
+                        string? byUuid = scope.Repository.Retrieve<MongoDerivedRecord>("six")?.Name;
+                        MongoDerivedRecord updated = scope.Repository.Update(new MongoDerivedRecord { Id = 5, Uuid = "five", Name = "Changed" });
+                        string? afterUpdate = scope.Repository.Retrieve<MongoDerivedRecord>(5UL)?.Name;
+                        long countAfterUpdate = scope.Count<MongoDerivedRecord>();
+                        bool deleted = scope.Repository.Delete(new MongoDerivedRecord { Id = 5 });
+                        return new BaseKeyOutcome(byId, byUuid, updated != null && !updateFailedRaised, afterUpdate, countAfterUpdate, deleted, scope.Repository.Retrieve<MongoDerivedRecord>(5UL) == null, scope.Count<MongoDerivedRecord>());
+                    }
+                })
+                .TheTest
+                .ShouldPass<BaseKeyOutcome>((because, outcome) =>
+                {
+                    because.ItsTrue("it is retrieved by the inherited id", outcome.ById == "Original");
+                    because.ItsTrue("it is retrieved by the inherited uuid", outcome.ByUuid == "Other");
+                    because.ItsTrue("updating a stored document succeeds", outcome.UpdateSucceeded);
+                    because.ItsTrue("the update replaced the stored document", outcome.AfterUpdate == "Changed" && outcome.CountAfterUpdate == 2);
+                    because.ItsTrue("the delete removed the document", outcome.Deleted && outcome.DeletedIsGone && outcome.CountAfterDelete == 1);
+                })
+                .SoBeHappy()
+                .UnlessItFailed();
+        }
+
+        [IntegrationTest]
+        public void RejectASecondDocumentWithTheSameNonIdKey()
+        {
+            When.A<MongoTestScope>("creates two instances of a [Key]-keyed type with the same key",
+                MongoTestScope.Open,
+                scope =>
+                {
+                    using (scope)
+                    {
+                        MongoKeyedThing first = scope.Repository.Create(new MongoKeyedThing { Number = 41, Name = "First" });
+                        MongoKeyedThing second = scope.Repository.Create(new MongoKeyedThing { Number = 41, Name = "Second" });
+                        bool writeErrorRecorded = scope.Repository.LastException is MongoWriteException;
+                        MongoKeyedThing other = scope.Repository.Create(new MongoKeyedThing { Number = 42, Name = "Other" });
+                        long countBeforeDelete = scope.Count<MongoKeyedThing>();
+                        scope.Repository.Delete(new MongoKeyedThing { Number = 41 });
+                        return new UniqueKeyOutcome(first != null, second == null, writeErrorRecorded, other != null, countBeforeDelete, scope.Repository.Retrieve<MongoKeyedThing>(41UL) == null, scope.Count<MongoKeyedThing>());
+                    }
+                })
+                .TheTest
+                .ShouldPass<UniqueKeyOutcome>((because, outcome) =>
+                {
+                    because.ItsTrue("the first create succeeds", outcome.FirstCreated);
+                    because.ItsTrue("the second create with the same key returns null", outcome.SecondIsNull);
+                    because.ItsTrue("LastException holds the duplicate key error", outcome.WriteErrorRecorded);
+                    because.ItsTrue("a different key is still accepted", outcome.OtherCreated && outcome.CountBeforeDelete == 2);
+                    because.ItsTrue("deleting by key leaves no document with that key", outcome.DeletedIsGone && outcome.CountAfterDelete == 1);
+                })
+                .SoBeHappy()
+                .UnlessItFailed();
+        }
+
         /// <summary>A repository over a database that exists for one test and is dropped on dispose.</summary>
         private sealed class MongoTestScope : IDisposable
         {
@@ -242,6 +368,7 @@ namespace Bam.Data.Repositories.Tests.Integration
                 Repository = new MongoRepository(ConnectionString, databaseName);
                 Repository.AddType<MongoWidget>();
                 Repository.AddType<MongoKeyedThing>();
+                Repository.AddType<MongoDerivedRecord>();
             }
 
             public MongoRepository Repository { get; }
@@ -249,7 +376,7 @@ namespace Bam.Data.Repositories.Tests.Integration
             public static MongoTestScope Open()
             {
                 MongoClientSettings settings = MongoClientSettings.FromConnectionString(ConnectionString);
-                settings.ServerSelectionTimeout = TimeSpan.FromSeconds(30);
+                settings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
                 MongoClient client = new MongoClient(settings);
                 client.GetDatabase("admin").RunCommand<BsonDocument>(new BsonDocument("ping", 1));
                 return new MongoTestScope(client, "bamtest_" + Guid.NewGuid().ToString("N"));
@@ -278,6 +405,9 @@ namespace Bam.Data.Repositories.Tests.Integration
         private sealed record QueryOutcome(string[] ByDefinition, string[] ByDocument, string[] ByJson, string[] ByObject, int AllCount);
         private sealed record FailureOutcome(bool SecondIsNull, bool WriteExceptionRecorded, bool CreateFailedRaised, string? StoredName);
         private sealed record KeyedOutcome(string? Retrieved, string? Updated, long CountAfterUpdate, long CountAfterDelete);
+        private sealed record BaseQueryOutcome(string[] ByDefinition, string[] ByDocument, string[] ByJson, string[] ByObject, int AllCount, bool UntypedNullIsAmbiguous);
+        private sealed record BaseKeyOutcome(string? ById, string? ByUuid, bool UpdateSucceeded, string? AfterUpdate, long CountAfterUpdate, bool Deleted, bool DeletedIsGone, long CountAfterDelete);
+        private sealed record UniqueKeyOutcome(bool FirstCreated, bool SecondIsNull, bool WriteErrorRecorded, bool OtherCreated, long CountBeforeDelete, bool DeletedIsGone, long CountAfterDelete);
     }
 
     /// <summary>A stored type whose key is the conventional <c>Id</c>, which MongoDB maps to <c>_id</c>.</summary>
@@ -294,6 +424,19 @@ namespace Bam.Data.Repositories.Tests.Integration
     {
         [Key]
         public ulong Number { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary>The members <see cref="MongoDerivedRecord"/> inherits: its key and its uuid.</summary>
+    public abstract class MongoBaseRecord
+    {
+        public ulong Id { get; set; }
+        public string Uuid { get; set; } = string.Empty;
+    }
+
+    /// <summary>A stored type whose key is declared on its base class, as every RepoData type's is.</summary>
+    public class MongoDerivedRecord : MongoBaseRecord
+    {
         public string Name { get; set; } = string.Empty;
     }
 }

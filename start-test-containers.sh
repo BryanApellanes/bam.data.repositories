@@ -15,7 +15,7 @@ fi
 
 echo "[$NAME] starting..."
 podman rm -f "$NAME" 2>/dev/null || true
-podman run -d --name "$NAME" -p "$PORT:27017" "$IMAGE"
+podman run -d --name "$NAME" -p "127.0.0.1:$PORT:27017" "$IMAGE"
 
 elapsed=0
 until podman exec "$NAME" mongosh --quiet --eval "db.runCommand({ ping: 1 }).ok" 2>/dev/null | grep -q 1; do
