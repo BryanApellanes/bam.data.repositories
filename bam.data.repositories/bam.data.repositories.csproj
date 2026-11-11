@@ -50,4 +50,9 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- MongoRepository is the only consumer in the framework; bam.protocol.data and bam.test reach MongoDB.Bson through this project. -->
+    <PackageReference Include="MongoDB.Driver" Version="3.13.0" />
+  </ItemGroup>
+
 </Project>
