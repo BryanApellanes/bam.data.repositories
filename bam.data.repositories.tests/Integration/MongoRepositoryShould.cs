@@ -355,6 +355,164 @@ namespace Bam.Data.Repositories.Tests.Integration
                 .UnlessItFailed();
         }
 
+        [IntegrationTest]
+        public void CreateAndQueryTypesThatHaveNoUsableKey()
+        {
+            When.A<MongoTestScope>("creates and queries a type with no key and a type keyed by an ObjectId",
+                MongoTestScope.Open,
+                scope =>
+                {
+                    using (scope)
+                    {
+                        scope.Repository.AddType<MongoKeyless>();
+                        scope.Repository.AddType<MongoObjectIdThing>();
+                        MongoKeyless keyless = scope.Repository.Create(new MongoKeyless { Name = "No key" });
+                        MongoKeyless keylessAgain = scope.Repository.Create(new MongoKeyless { Name = "No key" });
+                        ObjectId id = ObjectId.GenerateNewId();
+                        MongoObjectIdThing withObjectId = scope.Repository.Create(new MongoObjectIdThing { Id = id, Name = "Object id" });
+                        FilterDefinition<BsonDocument> everything = Builders<BsonDocument>.Filter.Empty;
+                        string[] keylessNames = scope.Repository.Query<MongoKeyless>(everything).Select(k => k.Name).ToArray();
+                        MongoObjectIdThing[] objectIdThings = scope.Repository.Query<MongoObjectIdThing>(everything).ToArray();
+                        return new KeylessOutcome(
+                            keyless != null && keylessAgain != null,
+                            keylessNames,
+                            withObjectId != null,
+                            objectIdThings.Length == 1 && objectIdThings[0].Id == id && objectIdThings[0].Name == "Object id");
+                    }
+                })
+                .TheTest
+                .ShouldPass<KeylessOutcome>((because, outcome) =>
+                {
+                    because.ItsTrue("a type with no key is created, twice", outcome.KeylessCreated);
+                    because.ItsTrue("both keyless documents are read back", outcome.KeylessNames.SequenceEqual(new[] { "No key", "No key" }));
+                    because.ItsTrue("a type keyed by an ObjectId is created", outcome.ObjectIdCreated);
+                    because.ItsTrue("the ObjectId-keyed document is read back with its id", outcome.ObjectIdReadBack);
+                })
+                .SoBeHappy()
+                .UnlessItFailed();
+        }
+
+        [IntegrationTest]
+        public void EnforceTheUniqueKeyWhenUpdateIsTheFirstWrite()
+        {
+            When.A<MongoTestScope>("upserts a [Key]-keyed type before anything was created, then creates the same key",
+                MongoTestScope.Open,
+                scope =>
+                {
+                    using (scope)
+                    {
+                        MongoKeyedThing upserted = scope.Repository.Update(new MongoKeyedThing { Number = 7, Name = "Upserted" });
+                        MongoKeyedThing duplicate = scope.Repository.Create(new MongoKeyedThing { Number = 7, Name = "Duplicate" });
+                        return new FirstWriteOutcome(upserted != null, duplicate == null, scope.Repository.Retrieve<MongoKeyedThing>(7UL)?.Name, scope.Count<MongoKeyedThing>());
+                    }
+                })
+                .TheTest
+                .ShouldPass<FirstWriteOutcome>((because, outcome) =>
+                {
+                    because.ItsTrue("the upsert stores the document", outcome.Upserted && outcome.StoredName == "Upserted");
+                    because.ItsTrue("a create with the same key is rejected", outcome.DuplicateIsNull && outcome.DocumentCount == 1);
+                })
+                .SoBeHappy()
+                .UnlessItFailed();
+        }
+
+        [IntegrationTest]
+        public void StoreKeysUpToTheLargestUnsignedLong()
+        {
+            When.A<MongoTestScope>("round-trips ulong.MaxValue as a document id, as a [Key] and as a plain member",
+                MongoTestScope.Open,
+                scope =>
+                {
+                    using (scope)
+                    {
+                        scope.Repository.AddType<MongoBigNumberThing>();
+                        const ulong justOverLong = (ulong)long.MaxValue + 1;
+                        MongoWidget widget = scope.Repository.Create(new MongoWidget { Id = ulong.MaxValue, Uuid = "max", Name = "Largest" });
+                        scope.Repository.Create(new MongoWidget { Id = justOverLong, Uuid = "over", Name = "Just over" });
+                        scope.Repository.Update(new MongoWidget { Id = ulong.MaxValue, Uuid = "max", Name = "Largest, changed" });
+                        string? widgetName = scope.Repository.Retrieve<MongoWidget>(ulong.MaxValue)?.Name;
+                        string? overName = scope.Repository.Retrieve<MongoWidget>(justOverLong)?.Name;
+                        MongoWidget duplicate = scope.Repository.Create(new MongoWidget { Id = ulong.MaxValue, Uuid = "dup", Name = "Duplicate" });
+
+                        MongoKeyedThing keyed = scope.Repository.Create(new MongoKeyedThing { Number = ulong.MaxValue, Name = "Keyed" });
+                        string? keyedName = scope.Repository.Retrieve<MongoKeyedThing>(ulong.MaxValue)?.Name;
+                        MongoKeyedThing keyedDuplicate = scope.Repository.Create(new MongoKeyedThing { Number = ulong.MaxValue, Name = "Keyed duplicate" });
+
+                        scope.Repository.Create(new MongoBigNumberThing { Id = 1, Big = ulong.MaxValue, MaybeBig = ulong.MaxValue - 1 });
+                        scope.Repository.Create(new MongoBigNumberThing { Id = 2, Big = 5, MaybeBig = null });
+                        MongoBigNumberThing? big = scope.Repository.Retrieve<MongoBigNumberThing>(1UL);
+                        MongoBigNumberThing? small = scope.Repository.Retrieve<MongoBigNumberThing>(2UL);
+                        ulong[] largerThanFive = scope.Repository.Query<MongoBigNumberThing>(new BsonDocument("Big", new BsonDocument("$gt", 5))).Select(t => t.Id).ToArray();
+
+                        bool deleted = scope.Repository.Delete(new MongoWidget { Id = ulong.MaxValue });
+                        return new BigKeyOutcome(
+                            widget != null,
+                            widgetName,
+                            overName,
+                            duplicate == null,
+                            keyed != null && keyedName == "Keyed",
+                            keyedDuplicate == null,
+                            big?.Big == ulong.MaxValue && big?.MaybeBig == ulong.MaxValue - 1,
+                            small?.Big == 5 && small?.MaybeBig == null,
+                            largerThanFive,
+                            deleted && scope.Repository.Retrieve<MongoWidget>(ulong.MaxValue) == null,
+                            scope.Count<MongoWidget>());
+                    }
+                })
+                .TheTest
+                .ShouldPass<BigKeyOutcome>((because, outcome) =>
+                {
+                    because.ItsTrue("a document whose id is ulong.MaxValue is created", outcome.Created);
+                    because.ItsTrue("it is updated and retrieved by that id", outcome.RetrievedName == "Largest, changed");
+                    because.ItsTrue("an id just over long.MaxValue is retrieved", outcome.JustOverName == "Just over");
+                    because.ItsTrue("a second document with id ulong.MaxValue is rejected", outcome.DuplicateRejected);
+                    because.ItsTrue("a [Key] of ulong.MaxValue round-trips", outcome.KeyedRoundTrip);
+                    because.ItsTrue("the unique key index rejects a second ulong.MaxValue key", outcome.KeyedDuplicateRejected);
+                    because.ItsTrue("plain and nullable ulong members keep their values", outcome.MembersRoundTrip);
+                    because.ItsTrue("small and null values still round-trip", outcome.SmallRoundTrip);
+                    because.ItsTrue("the stored values compare numerically", outcome.LargerThanFive.SequenceEqual(new[] { 1UL }));
+                    because.ItsTrue("the document is deleted by that id", outcome.Deleted && outcome.WidgetCountAfterDelete == 1);
+                })
+                .SoBeHappy()
+                .UnlessItFailed();
+        }
+
+        [IntegrationTest]
+        public void ReadAndMatchKeysStoredAsInt64()
+        {
+            When.A<MongoTestScope>("reads, updates and deletes documents whose ulong members were written as Int64",
+                MongoTestScope.Open,
+                scope =>
+                {
+                    using (scope)
+                    {
+                        scope.InsertRaw<MongoWidget>(new BsonDocument { { "_id", 7L }, { "Uuid", "legacy" }, { "Name", "Legacy" }, { "Quantity", 1 } });
+                        scope.InsertRaw<MongoKeyedThing>(new BsonDocument { { "Number", 9L }, { "Name", "Legacy keyed" } });
+                        string? byId = scope.Repository.Retrieve<MongoWidget>(7UL)?.Name;
+                        MongoWidget duplicate = scope.Repository.Create(new MongoWidget { Id = 7, Uuid = "dup", Name = "Duplicate" });
+                        scope.Repository.Update(new MongoWidget { Id = 7, Uuid = "legacy", Name = "Rewritten", Quantity = 2 });
+                        string? afterUpdate = scope.Repository.Retrieve<MongoWidget>(7UL)?.Name;
+                        long countAfterUpdate = scope.Count<MongoWidget>();
+                        string? keyedByKey = scope.Repository.Retrieve<MongoKeyedThing>(9UL)?.Name;
+                        MongoKeyedThing keyedDuplicate = scope.Repository.Create(new MongoKeyedThing { Number = 9, Name = "Duplicate" });
+                        scope.Repository.Delete(new MongoKeyedThing { Number = 9 });
+                        return new LegacyOutcome(byId, duplicate == null, afterUpdate, countAfterUpdate, keyedByKey, keyedDuplicate == null, scope.Count<MongoKeyedThing>());
+                    }
+                })
+                .TheTest
+                .ShouldPass<LegacyOutcome>((because, outcome) =>
+                {
+                    because.ItsTrue("an Int64 document id is retrieved", outcome.ById == "Legacy");
+                    because.ItsTrue("a create with the same id is rejected", outcome.DuplicateRejected);
+                    because.ItsTrue("the document is updated in place", outcome.AfterUpdate == "Rewritten" && outcome.CountAfterUpdate == 1);
+                    because.ItsTrue("an Int64 [Key] is retrieved", outcome.KeyedByKey == "Legacy keyed");
+                    because.ItsTrue("the unique index treats Int64 and Decimal128 keys as equal", outcome.KeyedDuplicateRejected);
+                    because.ItsTrue("the Int64-keyed document is deleted", outcome.KeyedCountAfterDelete == 0);
+                })
+                .SoBeHappy()
+                .UnlessItFailed();
+        }
+
         /// <summary>A repository over a database that exists for one test and is dropped on dispose.</summary>
         private sealed class MongoTestScope : IDisposable
         {
@@ -387,6 +545,12 @@ namespace Bam.Data.Repositories.Tests.Integration
                 return _client.GetDatabase(_databaseName).GetCollection<BsonDocument>(typeof(T).FullName!).CountDocuments(Builders<BsonDocument>.Filter.Empty);
             }
 
+            /// <summary>Inserts a document as written, bypassing the repository's class maps.</summary>
+            public void InsertRaw<T>(BsonDocument document)
+            {
+                _client.GetDatabase(_databaseName).GetCollection<BsonDocument>(typeof(T).FullName!).InsertOne(document);
+            }
+
             public void Dispose()
             {
                 _client.DropDatabase(_databaseName);
@@ -407,6 +571,10 @@ namespace Bam.Data.Repositories.Tests.Integration
         private sealed record KeyedOutcome(string? Retrieved, string? Updated, long CountAfterUpdate, long CountAfterDelete);
         private sealed record BaseQueryOutcome(string[] ByDefinition, string[] ByDocument, string[] ByJson, string[] ByObject, int AllCount, bool UntypedNullIsAmbiguous);
         private sealed record BaseKeyOutcome(string? ById, string? ByUuid, bool UpdateSucceeded, string? AfterUpdate, long CountAfterUpdate, bool Deleted, bool DeletedIsGone, long CountAfterDelete);
+        private sealed record BigKeyOutcome(bool Created, string? RetrievedName, string? JustOverName, bool DuplicateRejected, bool KeyedRoundTrip, bool KeyedDuplicateRejected, bool MembersRoundTrip, bool SmallRoundTrip, ulong[] LargerThanFive, bool Deleted, long WidgetCountAfterDelete);
+        private sealed record LegacyOutcome(string? ById, bool DuplicateRejected, string? AfterUpdate, long CountAfterUpdate, string? KeyedByKey, bool KeyedDuplicateRejected, long KeyedCountAfterDelete);
+        private sealed record KeylessOutcome(bool KeylessCreated, string[] KeylessNames, bool ObjectIdCreated, bool ObjectIdReadBack);
+        private sealed record FirstWriteOutcome(bool Upserted, bool DuplicateIsNull, string? StoredName, long DocumentCount);
         private sealed record UniqueKeyOutcome(bool FirstCreated, bool SecondIsNull, bool WriteErrorRecorded, bool OtherCreated, long CountBeforeDelete, bool DeletedIsGone, long CountAfterDelete);
     }
 
@@ -437,6 +605,27 @@ namespace Bam.Data.Repositories.Tests.Integration
     /// <summary>A stored type whose key is declared on its base class, as every RepoData type's is.</summary>
     public class MongoDerivedRecord : MongoBaseRecord
     {
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary>A stored type with unsigned long members that are not its key.</summary>
+    public class MongoBigNumberThing
+    {
+        public ulong Id { get; set; }
+        public ulong Big { get; set; }
+        public ulong? MaybeBig { get; set; }
+    }
+
+    /// <summary>A stored type with no key property at all.</summary>
+    public class MongoKeyless
+    {
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary>The ordinary MongoDB document shape: an ObjectId document id, which is not a ulong key.</summary>
+    public class MongoObjectIdThing
+    {
+        public ObjectId Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
 }
