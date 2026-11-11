@@ -159,7 +159,10 @@ namespace Bam.Data.Repositories
             {
                 File.Move(filePath, filePath.GetNextFileName());
             }
-            TemplateRenderer.Render("SchemaRepository", schemaModel, new FileStream(filePath, FileMode.Create));
+            using (FileStream output = new FileStream(filePath, FileMode.Create))
+            {
+                TemplateRenderer.Render("SchemaRepository", schemaModel, output);
+            }
         }
 
         private void EnsureConfigOrDie()
