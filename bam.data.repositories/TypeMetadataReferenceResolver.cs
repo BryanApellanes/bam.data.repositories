@@ -24,10 +24,10 @@ namespace Bam.Data.Repositories
                     allTypes.Add(attrType);
                 }
             }
-            return new HashSet<MetadataReference>
-            (
-                allTypes.Select(type => MetadataReference.CreateFromFile(type.Assembly.GetFileInfo().FullName)).ToArray()
-            ).ToArray();
+            // assemblies with no file (loaded from bytes) cannot be referenced by path and are skipped
+            return AssemblyFileReferences.FromAssemblies(allTypes.Select(type => type.Assembly))
+                .Select(path => (MetadataReference)MetadataReference.CreateFromFile(path))
+                .ToArray();
         }
     }
 }
