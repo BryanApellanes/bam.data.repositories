@@ -1,4 +1,6 @@
 using System.Reflection;
+using System.Reflection.Emit;
+using System.Runtime.Loader;
 using Bam.DependencyInjection;
 using Bam.Test;
 using Microsoft.CodeAnalysis;
@@ -99,6 +101,59 @@ namespace Bam.Data.Repositories.Tests
         }
 
         [UnitTest]
+        public void RefuseAnAssemblyInACollectibleLoadContext()
+        {
+            When.A<AssemblyLoadContext>("is collectible and holds a copy of the test assembly",
+                () => new AssemblyLoadContext($"flar-collectible-{Guid.NewGuid():N}", isCollectible: true),
+                context =>
+                {
+                    try
+                    {
+                        Assembly collectible;
+                        using (FileStream stream = File.OpenRead(typeof(FileLessAssemblyReferencesShould).Assembly.Location))
+                        {
+                            collectible = context.LoadFromStream(stream);
+                        }
+                        Type collectibleType = collectible.GetType(typeof(FileLessProbePoco).FullName!, true)!;
+                        return ResolveAlone(collectibleType, collectible.FullName!);
+                    }
+                    finally
+                    {
+                        context.Unload();
+                    }
+                })
+                .TheTest
+                .ShouldPass<RefusalOutcome>((because, _, outcome) =>
+                {
+                    because.ItsTrue("no in-memory reference is made for memory that can be unloaded", !outcome.CreatedInMemory && outcome.InMemoryCount == 0);
+                    because.ItsTrue("the assembly is reported as skipped by its full name", outcome.Skipped.Length == 1 && outcome.Skipped[0].Equals(outcome.AssemblyFullName));
+                })
+                .SoBeHappy()
+                .UnlessItFailed();
+        }
+
+        [UnitTest]
+        public void RefuseADynamicAssembly()
+        {
+            When.A<AssemblyBuilder>("is a dynamic assembly with one type",
+                () => AssemblyBuilder.DefineDynamicAssembly(new AssemblyName($"flar_dynamic_{Guid.NewGuid():N}"), AssemblyBuilderAccess.Run),
+                builder =>
+                {
+                    ModuleBuilder module = builder.DefineDynamicModule("flar_dynamic");
+                    Type dynamicType = module.DefineType("FlarDynamicProbe", TypeAttributes.Public).CreateType();
+                    return ResolveAlone(dynamicType, builder.FullName);
+                })
+                .TheTest
+                .ShouldPass<RefusalOutcome>((because, _, outcome) =>
+                {
+                    because.ItsTrue("no in-memory reference is made for a dynamic assembly", !outcome.CreatedInMemory && outcome.InMemoryCount == 0);
+                    because.ItsTrue("the assembly is reported as skipped by its full name", outcome.Skipped.Length == 1 && outcome.Skipped[0].Equals(outcome.AssemblyFullName));
+                })
+                .SoBeHappy()
+                .UnlessItFailed();
+        }
+
+        [UnitTest]
         public void DescribeAMissingDaoTypeInAnAssemblyLoadedFromBytes()
         {
             When.A<Assembly>("is a dao assembly loaded from bytes with no dao for the poco",
@@ -133,11 +188,23 @@ namespace Bam.Data.Repositories.Tests
             return Assembly.Load(File.ReadAllBytes(typeof(FileLessAssemblyReferencesShould).Assembly.Location));
         }
 
+        // resolves a type whose assembly is its only one: the type has no custom attributes from other assemblies
+        private static RefusalOutcome ResolveAlone(Type type, string assemblyFullName)
+        {
+            bool createdInMemory = AssemblyFileReferences.TryCreateInMemoryReference(type.Assembly, out MetadataReference? _);
+            TypeMetadataReferenceResolver resolver = new TypeMetadataReferenceResolver(type);
+            MetadataReference[] references = resolver.GetMetaDataReferences();
+            int inMemoryCount = references.Count(reference => reference is not PortableExecutableReference fileReference || fileReference.FilePath == null);
+            return new RefusalOutcome(createdInMemory, inMemoryCount, resolver.SkippedAssemblies, assemblyFullName);
+        }
+
         private sealed record ReferencePathsOutcome(HashSet<string> References, bool AddedBytesLoaded, string FileLoadedPath);
 
         private sealed record MetadataReferencesOutcome(string[] FilePaths, int InMemoryCount, string[] Skipped, string FileLoadedPath);
 
         private sealed record CompileOutcome(bool Success, string[] Errors);
+
+        private sealed record RefusalOutcome(bool CreatedInMemory, int InMemoryCount, string[] Skipped, string AssemblyFullName);
 
         private sealed record MissingDaoOutcome(bool Threw, string Message, string AssemblyFullName);
     }
