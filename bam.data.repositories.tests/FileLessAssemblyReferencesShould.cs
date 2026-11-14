@@ -141,7 +141,7 @@ namespace Bam.Data.Repositories.Tests
                 {
                     ModuleBuilder module = builder.DefineDynamicModule("flar_dynamic");
                     Type dynamicType = module.DefineType("FlarDynamicProbe", TypeAttributes.Public).CreateType();
-                    return ResolveAlone(dynamicType, builder.FullName);
+                    return ResolveAlone(dynamicType, builder.FullName!);
                 })
                 .TheTest
                 .ShouldPass<RefusalOutcome>((because, _, outcome) =>

@@ -7,7 +7,7 @@ namespace Bam.Data.Repositories
     /// <summary>
     /// Builds compiler references from assemblies. An assembly loaded from a file is referenced by its path.
     /// An assembly with no file (loaded from bytes, as runtime-compiled pocos and Dao assemblies are) is
-    /// referenced from its in-memory metadata. Only a dynamic assembly can't be referenced at all.
+    /// referenced from its in-memory metadata. Dynamic assemblies and assemblies in a collectible load context can't be referenced.
     /// </summary>
     public static class AssemblyFileReferences
     {
