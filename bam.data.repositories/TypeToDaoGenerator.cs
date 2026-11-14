@@ -503,9 +503,14 @@ namespace Bam.Data.Repositories
         protected HashSet<string> GetReferenceAssemblies()
         {
             HashSet<string> references = GetDefaultReferenceAssemblies();
+            // assemblies with no file (loaded from bytes) cannot be referenced by path and are skipped
             _additionalReferenceAssemblies.Each(asm =>
             {
-                FileInfo assemblyInfo = asm.GetFileInfo();
+                if (!asm.TryGetFileInfo(out FileInfo? assemblyInfo))
+                {
+                    return;
+                }
+
                 if (references.Contains(assemblyInfo.Name))
                 {
                     references.Remove(assemblyInfo.Name); // removes System.Core.dll if it is later referenced by full path
@@ -515,21 +520,19 @@ namespace Bam.Data.Repositories
             });
             DaoSchemaDefinitionCreateResult.TypeSchema.Tables.Each(type =>
             {
-                references.Add(type.Assembly.GetFileInfo().FullName);
+                AssemblyFileReferences.TryAdd(references, type.Assembly);
                 CustomAttributeTypeDescriptor attrTypes = new CustomAttributeTypeDescriptor(type);
-                attrTypes.AttributeTypes.Each(attrType => references.Add(attrType.Assembly.GetFileInfo().FullName));
+                attrTypes.AttributeTypes.Each(attrType => AssemblyFileReferences.TryAdd(references, attrType.Assembly));
             });
-            references.Add(typeof(DaoRepository).Assembly.GetFileInfo().FullName);
+            AssemblyFileReferences.TryAdd(references, typeof(DaoRepository).Assembly);
             return references;
         }
 
         protected virtual HashSet<string> GetDefaultReferenceAssemblies()
         {
-            HashSet<string> references = new HashSet<string>(DefaultAssembliesToReference.Select(a => a.GetFileInfo().FullName).ToArray())
-            {
-                typeof(JsonIgnoreAttribute).Assembly.GetFileInfo().FullName,
-                typeof(Qi.Qi).Assembly.GetFileInfo().FullName,
-            };
+            HashSet<string> references = AssemblyFileReferences.FromAssemblies(DefaultAssembliesToReference);
+            AssemblyFileReferences.TryAdd(references, typeof(JsonIgnoreAttribute).Assembly);
+            AssemblyFileReferences.TryAdd(references, typeof(Qi.Qi).Assembly);
             return references;
         }
 

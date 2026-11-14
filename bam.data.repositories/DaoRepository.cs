@@ -1070,7 +1070,7 @@ namespace Bam.Data.Repositories
 
                     if (daoType == null)
                     {
-                        Logger.Warning("Unable to get dao type for pocoType ({0}): \r\n\tDao Assembly={1}, \r\n\tBase Type={2}, \r\n\tDaoNamespace={3}", pocoType.GetType().Name, daoAssembly.GetFilePath(), baseType.Name, DaoNamespace);
+                        Logger.Warning("{0}", DescribeMissingDaoType(pocoType, daoAssembly, baseType, DaoNamespace));
                     }
                     else
                     {
@@ -1081,6 +1081,15 @@ namespace Bam.Data.Repositories
                 }
             }
 		}
+
+        /// <summary>
+        /// The warning text for a poco type whose dao type isn't in the dao assembly. The dao assembly is usually
+        /// generated and loaded from bytes, so it is named by its path when it has one and by its full name otherwise.
+        /// </summary>
+        public static string DescribeMissingDaoType(Type pocoType, Assembly daoAssembly, Type baseType, string daoNamespace)
+        {
+            return $"Unable to get dao type for pocoType ({pocoType.FullName}): \r\n\tDao Assembly={daoAssembly.GetFilePathOrName()}, \r\n\tBase Type={baseType.Name}, \r\n\tDaoNamespace={daoNamespace}";
+        }
 
         /// <summary>
         /// Get the wrapper type for the specified developer defined
